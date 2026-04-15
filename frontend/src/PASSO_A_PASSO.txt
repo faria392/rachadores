@@ -1,0 +1,63 @@
+/**
+ * GUIA RÁPIDO: Como garantir que o ranking carregue
+ * 
+ * Execute estes passos na ordem:
+ */
+
+// PASSO 1: Verificar Backend
+// No terminal:
+// cd backend
+// npm start
+// 
+// Verifique ser vê:
+// ✅ Banco de dados inicializado com sucesso
+// 🚀 Backend rodando na porta 5000
+
+// PASSO 2: Verificar se API está respondendo
+// Abra no navegador:
+// http://localhost:5000/api/health
+//
+// Você deve ver:
+// {"status":"OK","timestamp":"..."}
+
+// PASSO 3: Verificar ranking (sem autenticação)
+// Abra no navegador:
+// http://localhost:5000/api/revenue/ranking
+//
+// Você deve ver um JSON com lista de usuários, ex:
+// [
+//   {"id":"1","name":"Gusta123","email":"gusta@email.com","total":2500000},
+//   {"id":"2","name":"Jshow","email":"jshow@email.com","total":2300000}
+// ]
+
+// PASSO 4: Se vir [] (array vazio)
+// Significa que não há usuários no banco ou não há faturamentos
+// SOLUÇÃO: Cadastre um usuário primeiro no frontend (/register)
+// E adicione um faturamento (/add-revenue)
+
+// PASSO 5: Testar no Frontend
+// 1. Abra http://localhost:3000/ranking
+// 2. Abra Console (F12 → Console)
+// 3. Você verá logs como:
+//    ✅ Ranking carregado: [...]
+//    ✅ LeaderboardList - dados recebidos: [...]
+//    📊 Dados enriquecidos: [...]
+
+// PASSO 6: Se ainda não aparecer
+// Tente:
+// 1. Recarregar página (Ctrl + R)
+// 2. Clicar botão "Atualizar" na página
+// 3. Clear cache (Ctrl + Shift + Delete)
+// 4. Reabrir DevTools e procurar erros
+
+/**
+ * RESUMO RÁPIDO:
+ * 
+ * Backend tá carregando dados?
+ *   ✅ SIM  → Frontend deve mostrar leaderboard
+ *   ❌ NÃO  → Verifique se há usuários/faturamentos no banco
+ * 
+ * Frontend tá recebendo dados?
+ *   ✅ SIM (console via Log) → Problema é renderização
+ *   ❌ NÃO (console vazio)  → Problema é na API ou autenticação
+ */
