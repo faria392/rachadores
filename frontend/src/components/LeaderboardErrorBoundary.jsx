@@ -26,7 +26,7 @@ class LeaderboardErrorBoundary extends React.Component {
             <p className="text-red-200 text-sm mb-3">
               Houve um problema ao renderizar o leaderboard dinâmico. Sendo exibida a visualização simplificada.
             </p>
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.DEV && (
               <p className="text-red-300 text-xs font-mono bg-red-950 p-2 rounded">
                 {this.state.error?.message || 'Erro desconhecido'}
               </p>
