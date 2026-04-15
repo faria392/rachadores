@@ -51,9 +51,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // ============================================
-// FRONTEND ESTÁTICO (React Build)
+// FRONTEND ESTÁTICO (React Build - Vite)
 // ============================================
-const frontendBuildPath = path.join(__dirname, 'frontend', 'build');
+const frontendBuildPath = path.join(__dirname, 'frontend', 'dist');
 
 // Verificar se o build do frontend existe
 const buildExists = fs.existsSync(frontendBuildPath);
