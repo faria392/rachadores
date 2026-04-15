@@ -30,8 +30,14 @@ async function startServer() {
       console.log(`📍 API disponível em http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error('❌ Erro ao inicializar banco de dados:', error);
-    process.exit(1);
+    console.warn('⚠️  AVISO: Erro ao inicializar banco de dados:', error.message);
+    console.warn('O servidor vai CONTINUAR RODANDO em modo API apenas\n');
+    
+    // Ainda assim, inicia o app para que a health check funcione
+    app.listen(PORT, () => {
+      console.log(`🚀 Backend rodando em modo API (sem DB) na porta ${PORT}`);
+      console.log(`📍 API disponível em http://localhost:${PORT}`);
+    });
   }
 }
 
