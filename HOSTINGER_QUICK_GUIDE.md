@@ -32,11 +32,32 @@ build
    - **Output Directory:** `build` ✅
    - **Entry File:** ⚠️ **DEIXE VAZIO** (este é React, não Node backend) ✅
 
-4. Clique **SAVE** → **DEPLOY**
+4. ⚠️ **IMPORTANTE - SPA Fallback:**
+   - Se houver opção "Fallback Route" ou similar: use `index.html`
+   - Se houver "Rewrite Rules": ya está configurado via `public/_redirects`
 
-5. Aguarde o build terminar (2-5 minutos)
+5. Clique **SAVE** → **DEPLOY**
 
-6. Teste seu site: `seu-dominio.com`
+6. Aguarde o build terminar (2-5 minutos)
+
+7. ✅ Verificação Local (Antes de fazer Deploy)
+
+Abra seu terminal e execute:
+
+```bash
+cd frontend
+npm run build
+dir build\index.html
+```
+
+Você deve ver:
+- ✅ Pasta `build/` criada
+- ✅ Arquivo `build/index.html` existindo
+- ✅ Arquivos em `build/static/js/` e `build/static/css/`
+
+---
+
+## Teste seu site: `seu-dominio.com`
 
 ---
 

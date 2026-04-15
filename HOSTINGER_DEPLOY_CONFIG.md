@@ -32,10 +32,36 @@ build
 - ❌ NÃO use qualquer caminho de arquivo como entry
 - ✅ DEIXE EM BRANCO
 
-### 4. **Public Folder** (se perguntado)
+---
+
+### 4. **SPA Fallback Route** (Se disponível)
+```
+index.html
+```
+
+Isto redireciona todas as rotas React para `index.html`. Necessário para React Router funcionar.
+
+### 5. **Public Folder** (se perguntado)
 ```
 public
 ```
+
+---
+
+## 📁 Arquivo de Configuração SPA
+
+Um arquivo `public/_redirects` foi criado:
+
+```
+frontend/public/_redirects
+```
+
+**Conteúdo:**
+```
+/* /index.html 200
+```
+
+**O que faz:** Redireciona automaticamente todas as rotas para `index.html` - essencial para React Router e SPAs.
 
 ---
 
@@ -60,33 +86,40 @@ frontend/build/
 ## ✅ Checklist de Deploy
 
 - [ ] Conectar repositório Git ao Hostinger
-- [ ] Configurar Build Command: `npm run build`
-- [ ] Configurar Output Directory: `build`
-- [ ] Configurar Entry File: `index.html`
+- [ ] Configurar Build Command: `npm run build` ✅
+- [ ] Configurar Output Directory: `build` ✅
+- [ ] **Entry File: DEIXE VAZIO** ⚠️
+- [ ] Configurar Fallback Route: `index.html` (se disponível) ✅
+- [ ] Arquivo `_redirects` está em `frontend/public/` ✅
 - [ ] Executar o deploy
 - [ ] Verificar se o site abre sem erros 404
 - [ ] Testar todas as páginas (Dashboard, Ranking, Achievements, etc.)
 
 ---
 
-## 🐛 Se Ainda Houver Erro "Output Directory ou Entry File incorreto"
+## 🐛 Se Ainda Houver Erro
 
-1. **Limpar cache do Hostinger:**
-   - Ir para Settings → Deployment → Clear Cache
+### "Output Directory não encontrado"
+- Certifique-se de usar **apenas** `build` (não `build/`)
 
-2. **Recriar o build localmente:**
-   ```bash
-   rm -rf frontend/build
-   npm run build
-   ```
+### "Entry File não encontrado" ou "src/index.js não encontrado"
+- ⚠️ **DEIXE O CAMPO DE ENTRY FILE VAZIO**
+- Este é um projeto React Frontend, não Node backend
 
-3. **Verificar permissões:**
-   - O arquivo `build/index.html` deve estar acessível
-   - Verificar se não há `.gitignore` bloqueando o build
+### "Página em branco" ou "404 em rotas"
+1. Verifique se `_redirects` está em `frontend/public/`
+2. Limpar cache: Settings → Deployment → Clear Cache
+3. Fazer novo deploy
 
-4. **Configuração de Fallback (se disponível):**
-   - Alguns hosts pedem um "Fallback Route"
-   - Configure para: `index.html` (para Single Page Applications)
+### Build local falha
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
+Verificar se `build/index.html` foi criado.
 
 ---
 
