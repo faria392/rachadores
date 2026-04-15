@@ -158,7 +158,7 @@ function Profile() {
     return (
       <div className="flex min-h-screen bg-zinc-950">
         <Sidebar />
-        <main className="flex-1 ml-64 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center" data-sidebar-layout>
           <div className="text-center">
             <div className="inline-block p-3 mb-4 bg-zinc-800 rounded-full">
               <User size={32} className="text-orange-500 animate-spin" />
@@ -176,7 +176,7 @@ function Profile() {
     <div className="flex min-h-screen bg-zinc-950">
       <Sidebar />
 
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 p-8" data-sidebar-layout>
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-100">

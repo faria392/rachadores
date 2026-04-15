@@ -23,7 +23,7 @@ function AddRevenue() {
       <Sidebar />
 
       {}
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 p-8" data-sidebar-layout>
         <div className="max-w-2xl mx-auto">
           {}
           <div className="mb-8">

@@ -99,7 +99,7 @@ function Achievements() {
     <div className="flex min-h-screen bg-zinc-950">
       <Sidebar />
 
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 p-8" data-sidebar-layout>
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">

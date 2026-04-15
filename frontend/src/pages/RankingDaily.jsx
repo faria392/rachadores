@@ -71,7 +71,7 @@ function RankingDaily() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 p-8" data-sidebar-layout>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
