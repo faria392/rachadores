@@ -1,14 +1,31 @@
 const mysql = require('mysql2/promise');
 
+// ============================================
+// VALIDAÇÃO DE VARIÁVEIS DE AMBIENTE
+// ============================================
+const requiredEnvVars = ['DB_HOST', 'DB_USERNAME', 'DB_NAME'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+
+if (missingVars.length > 0) {
+  console.error('❌ ERRO: Variáveis de ambiente obrigatórias não definidas:');
+  missingVars.forEach(v => console.error(`   - ${v}`));
+  console.error('\n📝 Defina as variáveis no arquivo .env');
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1); // Falha em produção se vars faltarem
+  }
+}
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USERNAME || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'faturamento_competicao',
+  database: process.env.DB_NAME || 'faturamento_competicaos',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelayMs: 0,
 });
 
 
@@ -22,7 +39,7 @@ async function initializeDatabase() {
 
   try {
     await connection.execute(
-      `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'faturamento_competicao'}`
+      `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'faturamento_competicaos'}`
     );
     console.log('✓ Banco de dados criado/verificado');
 

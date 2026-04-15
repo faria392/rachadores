@@ -1,42 +1,30 @@
-/**
- * 🚀 SERVIDOR UNIFICADO - Backend + Frontend
- * 
- * Este servidor roda:
- * - Backend Express (rotas de API)
- * - Frontend React (arquivos estáticos)
- * 
- * Tudo em uma única aplicação Node.js
- */
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
-// ============================================
-// BACKEND - Importar rotas da API
-// ============================================
 const { pool, initializeDatabase } = require('./backend/src/db');
 const authRoutes = require('./backend/src/routes/auth');
 const revenueRoutes = require('./backend/src/routes/revenue');
 const userRoutes = require('./backend/src/routes/user');
 
 // ============================================
-// CONFIGURAÇÃO EXPRESS
+// VALIDAÇÃO CRÍTICA - EVITAR ERRO 503
 // ============================================
+const NODE_ENV = process.env.NODE_ENV || 'development';
 const app = express();
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Middleware
+console.log(`\n📌 Ambiente: ${NODE_ENV}`);
+console.log(`📌 Porta: ${PORT}`);
+console.log(`📌 Host: ${HOST}\n`);
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ============================================
-// ROTAS DA API (BACKEND)
-// ============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/revenue', revenueRoutes);
 app.use('/api/user', userRoutes);
@@ -50,9 +38,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ============================================
-// FRONTEND ESTÁTICO (React Build - Vite)
-// ============================================
 const frontendBuildPath = path.join(__dirname, 'frontend', 'dist');
 
 // Verificar se o build do frontend existe
@@ -80,20 +65,13 @@ if (buildExists) {
   console.warn('📝 Execute: cd frontend && npm run build');
 }
 
-// ============================================
-// TRATAMENTO DE ERROS
-// ============================================
 app.use((err, req, res, next) => {
   console.error('❌ Erro:', err.message);
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
-// ============================================
-// INICIAR SERVIDOR
-// ============================================
 async function startServer() {
   try {
-    // Inicializar banco de dados
     await initializeDatabase();
     console.log('✅ Banco de dados inicializado com sucesso');
 
@@ -131,9 +109,6 @@ async function startServer() {
 // Iniciar
 startServer();
 
-// ============================================
-// GRACEFUL SHUTDOWN
-// ============================================
 process.on('SIGTERM', () => {
   console.log('\n📴 SIGTERM recebido, encerrando...');
   pool.end((err) => {
