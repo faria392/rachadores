@@ -1,21 +1,31 @@
 {
   "name": "meu-projeto",
   "version": "1.0.0",
-  "description": "Um projeto Node.js",
-  "main": "src/index.js",
+  "description": "Full Stack - Backend (Express) + Frontend (React)",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "setup": "cd backend && npm install && cd ../frontend && npm install && cd ..",
+    "build": "cd frontend && npm run build",
+    "prod": "npm run build && npm start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "nodejs",
-    "javascript"
+    "express",
+    "react",
+    "full-stack"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mysql2": "^3.6.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
