@@ -19,7 +19,7 @@ app.get('/health', (req, res) => {
 
 // SPA Fallback: Redirecionar todas as rotas não encontradas para index.html
 // Isso é essencial para React Router funcionar
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'build/index.html'));
 });
 
