@@ -18,6 +18,19 @@ Agora o projeto roda **em um único servidor Node.js**:
 
 ## 📋 Configuração no Hostinger
 
+### ⚠️ IMPORTANTE - Caminho Completo do Entry File
+
+No Hostinger, use **EXATAMENTE** este caminho:
+
+```
+server.js
+```
+
+**OU** (caminho completo):
+```
+./server.js
+```
+
 ### 1️⃣ Build Command
 ```
 npm run build
@@ -33,6 +46,12 @@ npm run build
 ```
 server.js
 ```
+
+⚠️ **NÃO USE:**
+- ❌ `src/server.js`
+- ❌ `frontend/server.js`
+- ❌ `./server.js` (geralmente Hostinger interpreta como pasta)
+- ✅ **APENAS:** `server.js`
 
 ### 4️⃣ Environment Variables
 ```

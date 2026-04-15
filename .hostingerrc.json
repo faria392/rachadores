@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "./",
+  "startCommand": "npm start",
+  "entryFile": "server.js",
+  "rootDirectory": "./",
+  "installCommand": "npm install",
+  "nodeVersion": "18.x",
+  "environment": "production",
+  "envVariables": {
+    "NODE_ENV": "production",
+    "PORT": "3000"
+  },
+  "description": "Full Stack App - Backend + Frontend Unificado"
+}
