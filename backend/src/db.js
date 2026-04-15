@@ -25,8 +25,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelayMs: 0,
-  connectionTimeout: 5000,  // Timeout de 5s
+  connectionTimeout: 5000,
 });
 
 pool.on('error', (err) => {
