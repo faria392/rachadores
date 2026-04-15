@@ -16,7 +16,7 @@ build
 
 ### Campo 3️⃣ - Entry File
 ```
-index.html
+⚠️ DEIXE VAZIO (Este é React Frontend, não Node backend)
 ```
 
 ---
@@ -30,7 +30,7 @@ index.html
 3. **Preencha:**
    - **Build Command:** `npm run build` ✅
    - **Output Directory:** `build` ✅
-   - **Entry File:** `index.html` ✅
+   - **Entry File:** ⚠️ **DEIXE VAZIO** (este é React, não Node backend) ✅
 
 4. Clique **SAVE** → **DEPLOY**
 
@@ -45,8 +45,8 @@ index.html
 ### Erro: "Output Directory não encontrado"
 **Solução:** Certifique-se de usar **apenas** `build` (não `build/` ou caminho completo)
 
-### Erro: "index.html não encontrado"
-**Solução:** Certifique-se de que o index.html está em `build/` e não em outro lugar
+### Erro: "Entry File não encontrado" ou "src/index.js não encontrado"
+**Solução:** ⚠️ **DEIXE O CAMPO DE ENTRY FILE VAZIO!** Este é um projeto React Frontend, não um backend Node.js. A Hostinger vai servir os arquivos estáticos da pasta `build/` automaticamente.
 
 ### Erro: Página em branco ou 404 em rotas
 **Solução:** Configure **Fallback Route** para `index.html` (isto faz redirecionar todas as rotas para index.html - necessário para React Router)

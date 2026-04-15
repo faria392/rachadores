@@ -24,8 +24,13 @@ build
 
 ### 3. **Entry File**
 ```
-index.html
+⚠️ DEIXE VAZIO ou não configure este campo
 ```
+
+**IMPORTANTE:** Este é um projeto **React Frontend**, não um backend Node.js!
+- ❌ NÃO use `src/index.js`
+- ❌ NÃO use qualquer caminho de arquivo como entry
+- ✅ DEIXE EM BRANCO
 
 ### 4. **Public Folder** (se perguntado)
 ```
