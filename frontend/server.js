@@ -30,9 +30,19 @@ app.use((err, req, res, next) => {
 });
 
 // Iniciar servidor
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || process.env.npm_package_config_port || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor React rodando na porta ${PORT}`);
   console.log(`📍 URL: http://localhost:${PORT}`);
   console.log(`📦 Servindo arquivos de: ${path.join(__dirname, 'build')}`);
+});
+
+// Tratamento de erros não capturados
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promise rejeitada:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Erro não capturado:', error);
+  process.exit(1);
 });
