@@ -7,8 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "setup": "cd backend && npm install && cd ../frontend && npm install && cd ..",
-    "postinstall": "cd frontend && npm install",
-    "build": "cd frontend && npm run build",
+    "postinstall": "cd frontend && npm install --production=false",
+    "build": "cd frontend && npm install --production=false && npm run build",
     "prod": "npm run build && npm start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

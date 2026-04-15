@@ -40,18 +40,15 @@ app.get('/api/health', (req, res) => {
 
 const frontendBuildPath = path.join(__dirname, 'frontend', 'dist');
 
-// Verificar se o build do frontend existe
 const buildExists = fs.existsSync(frontendBuildPath);
 
 if (buildExists) {
-  // Servir arquivos estáticos do frontend
   app.use(express.static(frontendBuildPath, {
     maxAge: '1y',
     etag: false,
     lastModified: false
   }));
 
-  // SPA Fallback para rotas React
   app.use((req, res) => {
     const indexPath = path.join(frontendBuildPath, 'index.html');
     if (fs.existsSync(indexPath)) {
