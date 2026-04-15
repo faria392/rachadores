@@ -21,7 +21,6 @@ function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
 
-  // Estado do alerta de conquista
   const { alert, hideAlert } = useAchievementDetection(ranking, totalAmount);
 
   useEffect(() => {
