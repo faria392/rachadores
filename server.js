@@ -7,7 +7,7 @@ const fs = require('fs');
 // ============================================
 // PROTEÇÃO: Imports de rotas com erro handling
 // ============================================
-let authRoutes, revenueRoutes, userRoutes;
+let authRoutes, revenueRoutes, userRoutes, financeiroRoutes;
 const { pool, initializeDatabase } = require('./backend/src/db');
 
 try {
@@ -34,6 +34,14 @@ try {
   userRoutes = (req, res) => res.status(500).json({ error: 'Serviço indisponível' });
 }
 
+try {
+  financeiroRoutes = require('./backend/src/routes/financeiro');
+  console.log('✓ Rotas FINANCEIRO carregadas');
+} catch (err) {
+  console.error('⚠️ Erro ao carregar rotas FINANCEIRO:', err.message);
+  financeiroRoutes = (req, res) => res.status(500).json({ error: 'Serviço indisponível' });
+}
+
 // ============================================
 // VALIDAÇÃO CRÍTICA - EVITAR ERRO 503
 // ============================================
@@ -52,6 +60,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/revenue', revenueRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/financeiro', financeiroRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
