@@ -210,7 +210,11 @@ const ContasChinesas = () => {
             contas: []
           };
         }
-        tabelasAgrupadas[conta.dominio].contas.push(conta);
+        
+        // Filtra o registro da tabela (aquele com nome "[Tabela: ...]") - não mostra como conta
+        if (!conta.nome || !conta.nome.startsWith('[Tabela:')) {
+          tabelasAgrupadas[conta.dominio].contas.push(conta);
+        }
       });
 
       setTabelas(Object.values(tabelasAgrupadas));
@@ -222,7 +226,7 @@ const ContasChinesas = () => {
     }
   }, []);
 
-  const adicionarNovaTabela = useCallback(() => {
+  const adicionarNovaTabela = useCallback(async () => {
     if (!novaTabela.trim()) {
       setFeedback('⚠️ Digite um nome para a tabela');
       setTimeout(() => setFeedback(''), 3000);
@@ -236,24 +240,64 @@ const ContasChinesas = () => {
       return;
     }
 
-    const novaTab = {
-      id: Date.now().toString(),
-      nome: novaTabela.trim(),
-      contas: []
-    };
+    try {
+      // Salva a tabela no banco criando um registro inicial
+      await contasChinesesService.addConta({
+        telefone: '',
+        pix: '',
+        cpf: '',
+        nome: `[Tabela: ${novaTabela.trim()}]`,
+        saldo: 0,
+        status: 'Ativa',
+        tipo: 'NOVA',
+        dominio: novaTabela.trim()
+      });
 
-    setTabelas(prevTabelas => [...prevTabelas, novaTab]);
-    setNovaTabela('');
-    setMostraFormulario(false);
-    setFeedback('✓ Tabela criada com sucesso!');
-    setTimeout(() => setFeedback(''), 3000);
+      const novaTab = {
+        id: Date.now().toString(),
+        nome: novaTabela.trim(),
+        contas: []
+      };
+
+      setTabelas(prevTabelas => [...prevTabelas, novaTab]);
+      setNovaTabela('');
+      setMostraFormulario(false);
+      setFeedback('✓ Tabela criada e salva com sucesso!');
+      setTimeout(() => setFeedback(''), 3000);
+    } catch (error) {
+      console.error('Erro ao criar tabela:', error);
+      setFeedback('✗ Erro ao criar tabela');
+      setTimeout(() => setFeedback(''), 3000);
+    }
   }, [novaTabela, tabelas]);
 
-  const deletarTabela = useCallback((tabelaId) => {
-    setTabelas(prevTabelas => prevTabelas.filter(t => t.id !== tabelaId));
-    setFeedback('✓ Tabela removida com sucesso!');
-    setTimeout(() => setFeedback(''), 3000);
-  }, []);
+  const deletarTabela = useCallback(async (tabelaId) => {
+    try {
+      // Encontra as contas dessa tabela
+      const tabela = tabelas.find(t => t.id === tabelaId);
+      
+      if (tabela) {
+        // Deleta o registro da tabela (aquele com nome "[Tabela: ...]")
+        const contasParaDeletar = tabela.contas.filter(c => c.nome && c.nome.startsWith('[Tabela:'));
+        
+        for (const conta of contasParaDeletar) {
+          try {
+            await contasChinesesService.deleteConta(conta.id);
+          } catch (error) {
+            console.error('Erro ao deletar registro da tabela:', error);
+          }
+        }
+      }
+
+      setTabelas(prevTabelas => prevTabelas.filter(t => t.id !== tabelaId));
+      setFeedback('✓ Tabela removida com sucesso!');
+      setTimeout(() => setFeedback(''), 3000);
+    } catch (error) {
+      console.error('Erro ao deletar tabela:', error);
+      setFeedback('✗ Erro ao remover tabela');
+      setTimeout(() => setFeedback(''), 3000);
+    }
+  }, [tabelas]);
 
   const updateConta = useCallback((tabelaId, contaId, field, value) => {
     setTabelas(prevTabelas => prevTabelas.map(tabela => {
