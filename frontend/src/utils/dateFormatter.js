@@ -53,3 +53,20 @@ export const getTodayBrasil = () => {
   
   return `${year}-${month}-${day}`;
 };
+
+// Normalizar data para formato YYYY-MM-DD
+export const normalizeDateToYYYYMMDD = (dateStr) => {
+  if (!dateStr) return '';
+  
+  // Se já está em formato YYYY-MM-DD, retorna assim
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  // Se está em formato ISO (2026-04-16T00:00:00.000Z), extrai apenas a data
+  if (dateStr.includes('T')) {
+    return dateStr.split('T')[0];
+  }
+  
+  return dateStr;
+};

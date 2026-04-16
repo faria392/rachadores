@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { revenueService } from '../services/api';
-import { formatDateBrasil, getTodayBrasil } from '../utils/dateFormatter';
+import { formatDateBrasil, normalizeDateToYYYYMMDD } from '../utils/dateFormatter';
 import { RefreshCw, History, Edit2, Trash2 } from 'lucide-react';
 
 function HistoryPage() {
@@ -66,7 +66,9 @@ function HistoryPage() {
     }
 
     try {
-      await revenueService.deleteRevenue(date);
+      // Normalizar a data para o formato esperado pelo backend
+      const normalizedDate = normalizeDateToYYYYMMDD(date);
+      await revenueService.deleteRevenue(normalizedDate);
       loadHistory();
     } catch (error) {
       console.error('Erro ao deletar faturamento:', error);
@@ -75,9 +77,13 @@ function HistoryPage() {
   };
 
   const handleEdit = (record) => {
-    // Armazenar o registro a editar no localStorage
-    localStorage.setItem('editingRevenue', JSON.stringify(record));
-    navigate('/add-revenue', { state: { editing: record } });
+    // Normalizar a data e armazenar o registro a editar no localStorage
+    const normalizedRecord = {
+      ...record,
+      date: normalizeDateToYYYYMMDD(record.date)
+    };
+    localStorage.setItem('editingRevenue', JSON.stringify(normalizedRecord));
+    navigate('/add-revenue', { state: { editing: normalizedRecord } });
   };
 
   return (

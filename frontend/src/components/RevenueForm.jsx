@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { revenueService } from '../services/api';
-import { getTodayBrasil } from '../utils/dateFormatter';
+import { getTodayBrasil, normalizeDateToYYYYMMDD } from '../utils/dateFormatter';
 import { Check, AlertCircle, Plus, Edit2 } from 'lucide-react';
 
 function RevenueForm({ onRevenueAdded, initialData = null }) {
@@ -13,11 +13,9 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
 
   useEffect(() => {
     if (initialData) {
-      // Garantir que a data está no formato YYYY-MM-DD
-      const dateStr = initialData.date.includes('T') 
-        ? initialData.date.split('T')[0] 
-        : initialData.date;
-      setDate(dateStr);
+      // Normalizar a data para o formato YYYY-MM-DD
+      const normalizedDate = normalizeDateToYYYYMMDD(initialData.date);
+      setDate(normalizedDate);
       setAmount(initialData.amount.toString());
       setIsEditing(true);
     }
@@ -38,11 +36,14 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
     setLoading(true);
 
     try {
+      // Normalizar a data antes de enviar
+      const normalizedDate = normalizeDateToYYYYMMDD(date);
+      
       if (isEditing) {
-        await revenueService.editRevenue(numAmount, date);
+        await revenueService.editRevenue(numAmount, normalizedDate);
         setSuccess('Faturamento atualizado com sucesso!');
       } else {
-        await revenueService.addRevenue(numAmount, date);
+        await revenueService.addRevenue(numAmount, normalizedDate);
         setSuccess('Faturamento registrado com sucesso!');
       }
       
