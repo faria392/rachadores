@@ -69,7 +69,6 @@ const DashboardFinanceiro = () => {
     localStorage.setItem('dashboardFinanceiro', JSON.stringify(dados));
   }, [dados]);
 
-  // Obter dados do dia selecionado
   const getDadosDia = () => {
     return dados.find(d => d.data === dataSelecionada) || {
       data: dataSelecionada,
@@ -271,12 +270,12 @@ const DashboardFinanceiro = () => {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <DollarSign size={32} className="text-orange-500" />
-              <h1 className="text-4xl font-bold text-gray-100">Dashboard Financeiro</h1>
+              <h1 className="text-4xl font-bold text-gray-100">Planilha</h1>
             </div>
-            <p className="text-gray-400">Controle seu faturamento e gastos em tempo real</p>
+            <p className="text-gray-400">Controla ai cachorro</p>
           </div>
 
-          {/* Feedback Message */}
+          {}
           {feedbackMsg && (
             <div className="mb-6 p-4 bg-orange-500/20 border border-orange-500 rounded-lg text-orange-300 animate-pulse">
               {feedbackMsg}
