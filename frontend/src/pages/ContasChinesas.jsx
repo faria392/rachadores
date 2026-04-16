@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Save, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Save, RefreshCw, DollarSign } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { contasChinesesService } from '../services/api';
 import '../pages/ContasChinesas.css';
@@ -13,7 +13,6 @@ const ContasChinesas = () => {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState('');
 
-  // Dados mockados padrão
   const MOCK_DATA_69B = [
     { id: 1, telefone: '11987654321', pix: '', cpf: '123.456.789-00', nome: 'João Silva', saldo: 1500, status: 'Ativa', tipo: 'NOVA' },
     { id: 2, telefone: '11912345678', pix: '', cpf: '987.654.321-00', nome: 'Maria Santos', saldo: 2300, status: 'Ativa', tipo: 'ANTIGA' },
@@ -26,7 +25,6 @@ const ContasChinesas = () => {
     { id: 6, telefone: '21998765432', pix: '', cpf: '999.000.111-22', nome: 'Fernanda Lima', saldo: 2100, status: 'Inativa', tipo: 'ANTIGA' },
   ];
 
-  // Verificar autenticação
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -311,102 +309,120 @@ const ContasChinesas = () => {
 
   if (loading) {
     return (
-      <div className="pagina-container">
+      <div className="flex min-h-screen bg-zinc-950">
         <Sidebar />
-        <div className="conteudo-principal">
-          <div className="loading">Carregando...</div>
-        </div>
+        <main className="flex-1 p-8" data-sidebar-layout>
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-400">Carregando...</p>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="pagina-container">
+    <div className="flex min-h-screen bg-zinc-950">
+      {/* Sidebar */}
       <Sidebar />
-      
-      <div className="conteudo-principal conta-chinas-page">
-        {/* Topo */}
-        <div className="topo-pagina">
-          <h1 className="titulo-principal">CONTA CHINAS</h1>
-          <p className="subtitulo">
-            Preencha os campos em azul. O saldo total e os resumos são automáticos.
-          </p>
-        </div>
 
-        {/* Feedback */}
-        {feedback && <div className="feedback-message">{feedback}</div>}
+      {/* Main Content */}
+      <main className="flex-1 p-8" data-sidebar-layout>
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <DollarSign size={32} className="text-orange-500" />
+              <h1 className="text-4xl font-bold text-gray-100">Contas Chinesas</h1>
+            </div>
+            <p className="text-gray-400">Preencha os campos em azul. O saldo total e os resumos são automáticos.</p>
+          </div>
 
-        {/* Controles */}
-        <div className="controles-pagina">
-          <button className="btn-save" onClick={saveData} disabled={saving}>
-            <Save size={18} />
-            {saving ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-          <button className="btn-refresh" onClick={loadData}>
-            <RefreshCw size={18} />
-            Recarregar
-          </button>
-        </div>
+          {/* Feedback */}
+          {feedback && (
+            <div className="mb-6 p-4 bg-orange-500/20 border border-orange-500 rounded-lg text-orange-300">
+              {feedback}
+            </div>
+          )}
 
-        {/* Tabelas lado a lado */}
-        <div className="tabelas-layout">
-          <TabelaContas
-            titulo="TABELA"
-            dominio="69B.com"
-            contas={contas69B}
-            tipo="69B"
-          />
-          <TabelaContas
-            titulo="TABELA"
-            dominio="69A.com"
-            contas={contas69A}
-            tipo="69A"
-          />
-        </div>
+          {/* Controles */}
+          <div className="flex gap-3 mb-6 flex-wrap">
+            <button 
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:bg-gray-600"
+              onClick={saveData} 
+              disabled={saving}
+            >
+              <Save size={18} />
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
+            </button>
+            <button 
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              onClick={loadData}
+            >
+              <RefreshCw size={18} />
+              Recarregar
+            </button>
+          </div>
 
-        {/* Resumo Geral */}
-        <div className="resumo-geral">
-          <h2>Resumo Geral</h2>
-          <div className="grid-resumo">
-            <div className="card-resumo">
-              <div className="label">Total Geral (Contas)</div>
-              <div className="valor">
-                {totals69B.totalContas + totals69A.totalContas}
+          {/* Tabelas lado a lado */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <TabelaContas
+              titulo="TABELA"
+              dominio="69B.com"
+              contas={contas69B}
+              tipo="69B"
+            />
+            <TabelaContas
+              titulo="TABELA"
+              dominio="69A.com"
+              contas={contas69A}
+              tipo="69A"
+            />
+          </div>
+
+          {/* Resumo Geral */}
+          <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+            <h2 className="text-2xl font-bold text-gray-100 mb-6">Resumo Geral</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-blue-500">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Geral (Contas)</div>
+                <div className="text-3xl font-bold text-gray-100 mt-2">
+                  {totals69B.totalContas + totals69A.totalContas}
+                </div>
               </div>
-            </div>
-            <div className="card-resumo">
-              <div className="label">Saldo Total 69B</div>
-              <div className={`valor ${totals69B.totalSaldo < 0 ? 'negativo' : ''}`}>
-                R$ {totals69B.totalSaldo.toFixed(2).replace('.', ',')}
+              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Total 69B</div>
+                <div className={`text-3xl font-bold mt-2 ${totals69B.totalSaldo < 0 ? 'text-red-400' : 'text-gray-100'}`}>
+                  R$ {totals69B.totalSaldo.toFixed(2).replace('.', ',')}
+                </div>
               </div>
-            </div>
-            <div className="card-resumo">
-              <div className="label">Saldo Total 69A</div>
-              <div className={`valor ${totals69A.totalSaldo < 0 ? 'negativo' : ''}`}>
-                R$ {totals69A.totalSaldo.toFixed(2).replace('.', ',')}
+              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-purple-500">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Total 69A</div>
+                <div className={`text-3xl font-bold mt-2 ${totals69A.totalSaldo < 0 ? 'text-red-400' : 'text-gray-100'}`}>
+                  R$ {totals69A.totalSaldo.toFixed(2).replace('.', ',')}
+                </div>
               </div>
-            </div>
-            <div className="card-resumo">
-              <div className="label">Saldo Combinado</div>
-              <div className={`valor ${totals69B.totalSaldo + totals69A.totalSaldo < 0 ? 'negativo' : ''}`}>
-                R$ {(totals69B.totalSaldo + totals69A.totalSaldo).toFixed(2).replace('.', ',')}
+              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-yellow-500">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Combinado</div>
+                <div className={`text-3xl font-bold mt-2 ${totals69B.totalSaldo + totals69A.totalSaldo < 0 ? 'text-red-400' : 'text-gray-100'}`}>
+                  R$ {(totals69B.totalSaldo + totals69A.totalSaldo).toFixed(2).replace('.', ',')}
+                </div>
               </div>
-            </div>
-            <div className="card-resumo">
-              <div className="label">Ativas (69B + 69A)</div>
-              <div className="valor" style={{ color: '#22c55e' }}>
-                {totals69B.contasAtivas + totals69A.contasAtivas}
+              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ativas (69B + 69A)</div>
+                <div className="text-3xl font-bold text-green-400 mt-2">
+                  {totals69B.contasAtivas + totals69A.contasAtivas}
+                </div>
               </div>
-            </div>
-            <div className="card-resumo">
-              <div className="label">Inativas (69B + 69A)</div>
-              <div className="valor" style={{ color: '#ef4444' }}>
-                {totals69B.contasInativas + totals69A.contasInativas}
+              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-red-500">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Inativas (69B + 69A)</div>
+                <div className="text-3xl font-bold text-red-400 mt-2">
+                  {totals69B.contasInativas + totals69A.contasInativas}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
