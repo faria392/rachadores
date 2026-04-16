@@ -6,7 +6,7 @@ import { contasChinesesService } from '../services/api';
 import '../pages/ContasChinesas.css';
 
 // Componente memoizado para cada linha da tabela
-const ContaRow = ({ tabela, conta, onUpdate, onDelete }) => {
+const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
   const [localData, setLocalData] = useState({
     telefone: conta.telefone,
     pix: conta.pix,
@@ -17,7 +17,7 @@ const ContaRow = ({ tabela, conta, onUpdate, onDelete }) => {
     tipo: conta.tipo,
   });
 
-  // Sincroniza quando a conta muda de fora
+  // Sincroniza quando a conta muda
   useEffect(() => {
     setLocalData({
       telefone: conta.telefone,
@@ -28,11 +28,26 @@ const ContaRow = ({ tabela, conta, onUpdate, onDelete }) => {
       status: conta.status,
       tipo: conta.tipo,
     });
-  }, [conta.id]); // Apenas quando o ID da conta muda
+  }, [
+    conta.telefone,
+    conta.pix,
+    conta.cpf,
+    conta.nome,
+    conta.saldo,
+    conta.status,
+    conta.tipo
+  ]);
 
   const handleBlur = (field) => {
-    if (localData[field] !== conta[field]) {
-      onUpdate(tabela.id, conta.id, field, localData[field]);
+    let finalValue = localData[field];
+    
+    // Converter para número no blur para campos que precisam
+    if (field === 'saldo') {
+      finalValue = Number(finalValue) || 0;
+    }
+    
+    if (finalValue !== conta[field]) {
+      onUpdate(tabela.id, conta.id, field, finalValue);
     }
   };
 
@@ -88,13 +103,11 @@ const ContaRow = ({ tabela, conta, onUpdate, onDelete }) => {
       </td>
       <td className={`celula-saldo celula-editavel ${Number(localData.saldo) < 0 ? 'negativo' : ''}`}>
         <input
-          type="number"
+          type="text"
           value={localData.saldo}
-          onChange={(e) => handleChange('saldo', Number(e.target.value))}
+          onChange={(e) => handleChange('saldo', e.target.value)}
           onBlur={() => handleBlur('saldo')}
           placeholder="0.00"
-          step="0.01"
-          className="input-saldo"
           autoComplete="off"
         />
       </td>
@@ -135,7 +148,7 @@ const ContaRow = ({ tabela, conta, onUpdate, onDelete }) => {
       </td>
     </tr>
   );
-};
+});
 
 const ContasChinesas = () => {
   const navigate = useNavigate();
