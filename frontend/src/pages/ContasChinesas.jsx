@@ -174,8 +174,7 @@ const ContasChinesas = () => {
       setLoading(true);
       const response = await contasChinesesService.getAll();
       const contas = response.data || [];
-      
-      // Agrupar contas por domínio (nome da tabela)
+
       const tabelasAgrupadas = {};
       contas.forEach(conta => {
         if (!tabelasAgrupadas[conta.dominio]) {
@@ -364,9 +363,6 @@ const ContasChinesas = () => {
       
       setFeedback('✓ Dados salvos com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
-      
-      // Recarrega os dados após salvar para sincronizar com o servidor
-      await loadData();
     } catch (error) {
       console.error('Erro ao salvar:', error);
       setFeedback('✗ Erro ao salvar dados');
@@ -374,7 +370,7 @@ const ContasChinesas = () => {
     } finally {
       setSaving(false);
     }
-  }, [tabelas, loadData]);
+  }, [tabelas]);
 
   const TabelaContas = ({ tabela }) => {
     const totals = calculateTotals(tabela.contas);
