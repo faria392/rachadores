@@ -24,19 +24,26 @@ router.get('/summary', verifyToken, async (req, res) => {
 
     connection.release();
 
+    // 🛡️ BLINDAGEM: Sempre retorna arrays válidos
+    console.log('SUMMARY BACKEND:', {
+      revenues: revenues ? revenues.length : 0,
+      expenses: expenses ? expenses.length : 0
+    });
+
     res.json({
-      revenues: revenues || [],
-      expenses: expenses || [],
+      revenues: Array.isArray(revenues) ? revenues : [],
+      expenses: Array.isArray(expenses) ? expenses : [],
     });
   } catch (error) {
     console.error('Erro ao buscar resumo:', error);
-    res.status(500).json({ error: 'Erro ao buscar resumo financeiro' });
+    res.status(500).json({ 
+      error: 'Erro ao buscar resumo financeiro',
+      revenues: [],
+      expenses: []
+    });
   }
 });
 
-// ============================================
-// GET /financeiro/day/:date - Dados de um dia
-// ============================================
 router.get('/day/:date', verifyToken, async (req, res) => {
   const { date } = req.params;
 

@@ -111,7 +111,12 @@ function DashboardFinanceiro() {
       console.log('🔄 Requisição: GET /api/financial/summary');
       const response = await financialService.getSummary();
       console.log('✅ Resposta recebida:', response.data);
-      setTodosOsDados(response.data);
+      
+      // 🛡️ BLINDAGEM: Garante que revenues e expenses sejam arrays
+      setTodosOsDados({
+        revenues: Array.isArray(response.data?.revenues) ? response.data.revenues : [],
+        expenses: Array.isArray(response.data?.expenses) ? response.data.expenses : [],
+      });
     } catch (error) {
       console.error('❌ Erro ao carregar resumo:', error.response?.data || error.message);
       setTodosOsDados({ revenues: [], expenses: [] });
@@ -218,20 +223,24 @@ function DashboardFinanceiro() {
   const prepararDadosGraficos = () => {
     const mapa = {};
 
+    // 🛡️ BLINDAGEM: Sempre arrays
+    const revenues = Array.isArray(todosOsDados.revenues) ? todosOsDados.revenues : [];
+    const expenses = Array.isArray(todosOsDados.expenses) ? todosOsDados.expenses : [];
+
     // Processa receitas
-    todosOsDados.revenues.forEach((rev) => {
+    revenues.forEach((rev) => {
       if (!mapa[rev.date]) {
         mapa[rev.date] = { date: rev.date, faturamento: 0, gastos: 0 };
       }
-      mapa[rev.date].faturamento = parseFloat(rev.amount);
+      mapa[rev.date].faturamento = parseFloat(rev.amount || 0);
     });
 
     // Processa despesas
-    todosOsDados.expenses.forEach((exp) => {
+    expenses.forEach((exp) => {
       if (!mapa[exp.date]) {
         mapa[exp.date] = { date: exp.date, faturamento: 0, gastos: 0 };
       }
-      mapa[exp.date].gastos += parseFloat(exp.amount);
+      mapa[exp.date].gastos += parseFloat(exp.amount || 0);
     });
 
     // Calcula lucro e ordena
@@ -474,7 +483,7 @@ function DashboardFinanceiro() {
                       borderRadius: '8px',
                       color: '#fff',
                     }}
-                    formatter={(value) => `R$ ${value.toFixed(2)}`}
+                    formatter={(value) => `R$ ${Number(value || 0).toFixed(2)}`}
                   />
                   <Legend />
                   <Bar dataKey="faturamento" fill="#22c55e" name="Faturamento" />
@@ -499,7 +508,7 @@ function DashboardFinanceiro() {
                       borderRadius: '8px',
                       color: '#fff',
                     }}
-                    formatter={(value) => `R$ ${value.toFixed(2)}`}
+                    formatter={(value) => `R$ ${Number(value || 0).toFixed(2)}`}
                   />
                   <Area
                     type="monotone"
