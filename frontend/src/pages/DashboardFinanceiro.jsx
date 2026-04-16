@@ -47,6 +47,7 @@ function DashboardFinanceiro() {
   // Modais
   const [modalEditFaturamento, setModalEditFaturamento] = useState(false);
   const [modalEditGasto, setModalEditGasto] = useState(false);
+  const [faturamentoEmEdicao, setFaturamentoEmEdicao] = useState(null);
   const [gastoEmEdicao, setGastoEmEdicao] = useState(null);
 
 
@@ -71,6 +72,7 @@ function DashboardFinanceiro() {
       console.log('✅ Resposta recebida:', response.data);
       setDados({
         faturamento: response.data.faturamento || 0,
+        faturamentos: response.data.faturamentos || [],
         gastos: response.data.gastos || [],
         totalGastos: response.data.totalGastos || 0,
         lucro: response.data.lucro || 0,
@@ -192,6 +194,52 @@ function DashboardFinanceiro() {
     } catch (error) {
       console.error('Erro ao editar gasto:', error);
       mostrarFeedback('Erro ao editar gasto', 'error');
+    }
+  };
+
+  const deletarFaturamento = async (id) => {
+    if (!window.confirm('Tem certeza que deseja deletar?')) return;
+
+    try {
+      await financialService.deleteRevenue(id);
+      mostrarFeedback('✅ Faturamento deletado com sucesso!', 'success');
+      await carregarDadosDia();
+      await carregarTodosDados();
+    } catch (error) {
+      console.error('Erro ao deletar faturamento:', error);
+      mostrarFeedback('Erro ao deletar faturamento', 'error');
+    }
+  };
+
+  const abrirModalEditarFaturamentoDia = (faturamento) => {
+    setFaturamentoEmEdicao({
+      id: faturamento.id,
+      nome: faturamento.name,
+      valor: faturamento.amount.toString(),
+    });
+    setModalEditFaturamento(true);
+  };
+
+  const editarFaturamento = async () => {
+    if (!faturamentoEmEdicao.nome || !faturamentoEmEdicao.valor || isNaN(faturamentoEmEdicao.valor)) {
+      mostrarFeedback('Preencha nome e valor válido', 'error');
+      return;
+    }
+
+    try {
+      await financialService.updateRevenue(
+        faturamentoEmEdicao.id,
+        faturamentoEmEdicao.nome,
+        parseFloat(faturamentoEmEdicao.valor)
+      );
+      mostrarFeedback('✅ Faturamento atualizado com sucesso!', 'success');
+      setModalEditFaturamento(false);
+      setFaturamentoEmEdicao(null);
+      await carregarDadosDia();
+      await carregarTodosDados();
+    } catch (error) {
+      console.error('Erro ao editar faturamento:', error);
+      mostrarFeedback('Erro ao editar faturamento', 'error');
     }
   };
 
@@ -335,46 +383,6 @@ function DashboardFinanceiro() {
             </div>
           </div>
 
-          {/* CONTAINER FATURAMENTO & GASTOS DO DIA */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* FATURAMENTO DO DIA */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Faturamento do Dia</h3>
-              {dados.faturamento > 0 ? (
-                <div>
-                  <p className="text-zinc-400 text-sm mb-2">Descrição</p>
-                  <p className="text-2xl font-bold text-green-400 mb-4">Faturamento</p>
-                  <p className="text-4xl font-bold text-green-400">
-                    R$ {dados.faturamento.toFixed(2)}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-zinc-400 text-center py-8">Nenhum faturamento registrado</p>
-              )}
-            </div>
-
-            {/* GASTOS DO DIA */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Gastos do Dia</h3>
-              {dados.gastos.length > 0 ? (
-                <div className="space-y-2">
-                  {dados.gastos.map((gasto) => (
-                    <div key={gasto.id} className="flex justify-between items-center bg-zinc-800 p-3 rounded-lg">
-                      <p className="text-white">{gasto.name}</p>
-                      <p className="text-red-400 font-semibold">R$ {parseFloat(gasto.amount).toFixed(2)}</p>
-                    </div>
-                  ))}
-                  <div className="flex justify-between items-center bg-zinc-700 p-3 rounded-lg mt-3 border border-zinc-600">
-                    <p className="text-white font-bold">Total</p>
-                    <p className="text-red-400 font-bold">R$ {dados.totalGastos.toFixed(2)}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-zinc-400 text-center py-8">Nenhum gasto registrado</p>
-              )}
-            </div>
-          </div>
-
           {/* SEÇÃO DE ENTRADA */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* FATURAMENTO */}
@@ -483,6 +491,47 @@ function DashboardFinanceiro() {
 
                       <button
                         onClick={() => deletarGasto(gasto.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* LISTA DE FATURAMENTO */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-bold text-white mb-4">Faturamento do Dia</h2>
+
+            {dados.faturamentos?.length === 0 ? (
+              <p className="text-zinc-400 text-center py-8">Nenhum faturamento registrado neste dia</p>
+            ) : (
+              <div className="space-y-2">
+                {dados.faturamentos?.map((faturamento) => (
+                  <div
+                    key={faturamento.id}
+                    className="flex items-center justify-between bg-zinc-800 p-4 rounded-lg border border-zinc-700 hover:border-zinc-600 transition"
+                  >
+                    <div className="flex-1">
+                      <p className="text-white font-semibold">{faturamento.name}</p>
+                      <p className="text-zinc-400 text-sm">
+                        R$ {parseFloat(faturamento.amount).toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => abrirModalEditarFaturamentoDia(faturamento)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+
+                      <button
+                        onClick={() => deletarFaturamento(faturamento.id)}
                         className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition"
                       >
                         <Trash2 size={18} />
@@ -647,6 +696,59 @@ function DashboardFinanceiro() {
               </button>
               <button
                 onClick={() => setModalEditGasto(false)}
+                className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 rounded-lg transition"
+              >
+                ❌ Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR FATURAMENTO DO DIA */}
+      {modalEditFaturamento && faturamentoEmEdicao && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">Editar Faturamento</h3>
+              <button
+                onClick={() => setModalEditFaturamento(false)}
+                className="text-zinc-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Nome do faturamento"
+              value={faturamentoEmEdicao.nome}
+              onChange={(e) =>
+                setFaturamentoEmEdicao({ ...faturamentoEmEdicao, nome: e.target.value })
+              }
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white mb-4 focus:border-orange-500 focus:outline-none"
+            />
+
+            <input
+              type="number"
+              placeholder="Valor do faturamento"
+              value={faturamentoEmEdicao.valor}
+              onChange={(e) =>
+                setFaturamentoEmEdicao({ ...faturamentoEmEdicao, valor: e.target.value })
+              }
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white mb-4 focus:border-orange-500 focus:outline-none"
+              step="0.01"
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={editarFaturamento}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition"
+              >
+                ✅ Salvar
+              </button>
+              <button
+                onClick={() => setModalEditFaturamento(false)}
                 className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 rounded-lg transition"
               >
                 ❌ Cancelar

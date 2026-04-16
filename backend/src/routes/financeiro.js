@@ -51,14 +51,13 @@ router.get('/day/:date', verifyToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
 
-    // Pega faturamento do dia
+    // Pega faturamentos do dia
     const [revenueRows] = await connection.execute(
-      'SELECT amount, name FROM revenue WHERE user_id = ? AND date = ?',
+      'SELECT id, amount, name FROM revenue WHERE user_id = ? AND date = ?',
       [req.userId, date]
     );
 
     const faturamento = revenueRows.length > 0 ? revenueRows[0].amount : 0;
-    const faturamentoNome = revenueRows.length > 0 ? revenueRows[0].name : 'Faturamento';
 
     // Pega despesas do dia
     const [expenseRows] = await connection.execute(
@@ -75,7 +74,7 @@ router.get('/day/:date', verifyToken, async (req, res) => {
     res.json({
       date,
       faturamento: parseFloat(faturamento),
-      faturamentoNome,
+      faturamentos: revenueRows,
       gastos: expenseRows,
       totalGastos,
       lucro,
@@ -106,10 +105,9 @@ router.post('/revenue', verifyToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
 
-    // INSERT OR UPDATE
+    // INSERT novo faturamento
     await connection.execute(
-      `INSERT INTO revenue (user_id, amount, date, name) VALUES (?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE amount = VALUES(amount), name = VALUES(name)`,
+      `INSERT INTO revenue (user_id, amount, date, name) VALUES (?, ?, ?, ?)`,
       [req.userId, numAmount, date, name || 'Faturamento']
     );
 
@@ -249,6 +247,93 @@ router.delete('/expenses/:id', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Erro ao deletar despesa:', error);
     res.status(500).json({ error: 'Erro ao deletar despesa' });
+  }
+});
+
+// ============================================
+// PUT /financeiro/revenue/:id - Atualizar faturamento
+// ============================================
+router.put('/revenue/:id', verifyToken, async (req, res) => {
+  console.log('🔥 CHEGOU REQUISIÇÃO PUT /financeiro/revenue/:id', req.body);
+  
+  const { id } = req.params;
+  const { name, amount } = req.body;
+
+  if (!name || amount === undefined) {
+    return res.status(400).json({ error: 'Nome e valor são obrigatórios' });
+  }
+
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount < 0) {
+    return res.status(400).json({ error: 'Valor deve ser um número positivo' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+
+    // Verifica se o faturamento pertence ao usuário
+    const [rows] = await connection.execute(
+      'SELECT id FROM revenue WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
+
+    if (rows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Faturamento não encontrado' });
+    }
+
+    // Atualiza
+    await connection.execute(
+      'UPDATE revenue SET name = ?, amount = ? WHERE id = ? AND user_id = ?',
+      [name, numAmount, id, req.userId]
+    );
+
+    connection.release();
+
+    res.json({
+      message: 'Faturamento atualizado com sucesso',
+      id,
+      name,
+      amount: numAmount,
+    });
+  } catch (error) {
+    console.error('Erro ao editar faturamento:', error);
+    res.status(500).json({ error: 'Erro ao editar faturamento' });
+  }
+});
+
+// ============================================
+// DELETE /financeiro/revenue/:id - Deletar faturamento
+// ============================================
+router.delete('/revenue/:id', verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const connection = await pool.getConnection();
+
+    // Verifica se o faturamento pertence ao usuário
+    const [rows] = await connection.execute(
+      'SELECT id FROM revenue WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
+
+    if (rows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Faturamento não encontrado' });
+    }
+
+    // Deleta
+    await connection.execute(
+      'DELETE FROM revenue WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
+
+    connection.release();
+
+    res.json({ message: 'Faturamento deletado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar faturamento:', error);
+    res.status(500).json({ error: 'Erro ao deletar faturamento' });
   }
 });
 

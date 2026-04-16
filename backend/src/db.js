@@ -91,14 +91,34 @@ async function initializeDatabase() {
           user_id INT NOT NULL,
           amount DECIMAL(10, 2) NOT NULL,
           date DATE NOT NULL,
+          name VARCHAR(255) DEFAULT 'Faturamento',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-          UNIQUE KEY unique_user_date (user_id, date),
           INDEX idx_revenue_date (date),
           INDEX idx_revenue_user_date (user_id, date)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
       `);
       console.log('✓ Tabela revenue criada/verificada');
+
+      // Tenta adicionar coluna name se não existir
+      try {
+        await poolConnection.execute(`ALTER TABLE revenue ADD COLUMN name VARCHAR(255) DEFAULT 'Faturamento'`);
+        console.log('✓ Coluna name adicionada à tabela revenue');
+      } catch (err) {
+        if (err.code !== 'ER_DUP_FIELDNAME') {
+          console.log('⚠️ Coluna name já existe na tabela revenue');
+        }
+      }
+
+      // Tenta remover constraint UNIQUE para permitir múltiplos faturamentos por dia
+      try {
+        await poolConnection.execute(`ALTER TABLE revenue DROP INDEX unique_user_date`);
+        console.log('✓ Constraint UNIQUE removida para permitir múltiplos faturamentos por dia');
+      } catch (err) {
+        if (err.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+          console.log('⚠️ Constraint UNIQUE já foi removida ou não existe');
+        }
+      }
 
       // Tabela de despesas/gastos
       await poolConnection.execute(`

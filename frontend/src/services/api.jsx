@@ -132,6 +132,12 @@ export const financialService = {
   addRevenue: (date, amount, name) =>
     api.post('/financeiro/revenue', { date, amount, name }),
   
+  updateRevenue: (id, name, amount) =>
+    api.put(`/financeiro/revenue/${id}`, { name, amount }),
+  
+  deleteRevenue: (id) =>
+    api.delete(`/financeiro/revenue/${id}`),
+  
   addExpense: (date, name, amount) =>
     api.post('/financeiro/expenses', { date, name, amount }),
   
