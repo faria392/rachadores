@@ -13,17 +13,9 @@ const ContasChinesas = () => {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState('');
 
-  const MOCK_DATA_69B = [
-    { id: 1, telefone: '11987654321', pix: '', cpf: '123.456.789-00', nome: 'João Silva', saldo: 1500, status: 'Ativa', tipo: 'NOVA' },
-    { id: 2, telefone: '11912345678', pix: '', cpf: '987.654.321-00', nome: 'Maria Santos', saldo: 2300, status: 'Ativa', tipo: 'ANTIGA' },
-    { id: 3, telefone: '11998765432', pix: '', cpf: '456.789.123-00', nome: 'Pedro Costa', saldo: -500, status: 'Inativa', tipo: 'NOVA' },
-  ];
+  const MOCK_DATA_69B = [];
 
-  const MOCK_DATA_69A = [
-    { id: 4, telefone: '21987654321', pix: '', cpf: '111.222.333-44', nome: 'Ana Clara', saldo: 3200, status: 'Ativa', tipo: 'ANTIGA' },
-    { id: 5, telefone: '21912345678', pix: '', cpf: '555.666.777-88', nome: 'Carlos Mendes', saldo: 1800, status: 'Ativa', tipo: 'NOVA' },
-    { id: 6, telefone: '21998765432', pix: '', cpf: '999.000.111-22', nome: 'Fernanda Lima', saldo: 2100, status: 'Inativa', tipo: 'ANTIGA' },
-  ];
+  const MOCK_DATA_69A = [];
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -175,7 +167,7 @@ const ContasChinesas = () => {
 
     return (
       <div className="tabela-container">
-        <h2 className="tabela-titulo">{titulo} - {dominio}</h2>
+        <h2 className="tabela-titulo">EDITAR {titulo} - {dominio}</h2>
         
         <div className="tabela-wrapper">
           <table className="tabela-contas">
@@ -371,22 +363,16 @@ const ContasChinesas = () => {
               contas={contas69B}
               tipo="69B"
             />
-            <TabelaContas
-              titulo="TABELA"
-              dominio="69A.com"
-              contas={contas69A}
-              tipo="69A"
-            />
           </div>
 
           {/* Resumo Geral */}
           <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
-            <h2 className="text-2xl font-bold text-gray-100 mb-6">Resumo Geral</h2>
+            <h2 className="text-2xl font-bold text-gray-100 mb-6">Resumo Geral 69B.com</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-blue-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Geral (Contas)</div>
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total de Contas</div>
                 <div className="text-3xl font-bold text-gray-100 mt-2">
-                  {totals69B.totalContas + totals69A.totalContas}
+                  {totals69B.totalContas}
                 </div>
               </div>
               <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
@@ -395,28 +381,16 @@ const ContasChinesas = () => {
                   R$ {totals69B.totalSaldo.toFixed(2).replace('.', ',')}
                 </div>
               </div>
-              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-purple-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Total 69A</div>
-                <div className={`text-3xl font-bold mt-2 ${totals69A.totalSaldo < 0 ? 'text-red-400' : 'text-gray-100'}`}>
-                  R$ {totals69A.totalSaldo.toFixed(2).replace('.', ',')}
-                </div>
-              </div>
-              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-yellow-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Combinado</div>
-                <div className={`text-3xl font-bold mt-2 ${totals69B.totalSaldo + totals69A.totalSaldo < 0 ? 'text-red-400' : 'text-gray-100'}`}>
-                  R$ {(totals69B.totalSaldo + totals69A.totalSaldo).toFixed(2).replace('.', ',')}
-                </div>
-              </div>
               <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ativas (69B + 69A)</div>
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contas Ativas</div>
                 <div className="text-3xl font-bold text-green-400 mt-2">
-                  {totals69B.contasAtivas + totals69A.contasAtivas}
+                  {totals69B.contasAtivas}
                 </div>
               </div>
               <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-red-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Inativas (69B + 69A)</div>
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contas Inativas</div>
                 <div className="text-3xl font-bold text-red-400 mt-2">
-                  {totals69B.contasInativas + totals69A.contasInativas}
+                  {totals69B.contasInativas}
                 </div>
               </div>
             </div>
