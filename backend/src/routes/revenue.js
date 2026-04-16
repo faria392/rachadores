@@ -39,6 +39,12 @@ router.post('/add', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao salvar faturamento:', error);
+    
+    // Tratamento específico para erro de foreign key
+    if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.message.includes('foreign key')) {
+      return res.status(400).json({ error: 'Usuário não encontrado. Faça login novamente.' });
+    }
+    
     return res.status(500).json({ error: 'Erro ao salvar faturamento' });
   }
 });
