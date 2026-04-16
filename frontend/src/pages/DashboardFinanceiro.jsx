@@ -23,6 +23,7 @@ function DashboardFinanceiro() {
   const [dataSelecionada, setDataSelecionada] = useState(
     new Date().toISOString().split('T')[0]
   );
+  const [faturamentoNome, setFaturamentoNome] = useState('');
   const [faturamentoDia, setFaturamentoDia] = useState('');
   const [despesaNome, setDespesaNome] = useState('');
   const [despesaValor, setDespesaValor] = useState('');
@@ -115,6 +116,8 @@ function DashboardFinanceiro() {
     try {
       await financialService.addRevenue(dataSelecionada, parseFloat(faturamentoDia));
       mostrarFeedback('✅ Faturamento salvo com sucesso!', 'success');
+      setFaturamentoNome('');
+      setFaturamentoDia('');
       await carregarDadosDia();
       await carregarTodosDados();
     } catch (error) {
@@ -342,6 +345,14 @@ function DashboardFinanceiro() {
 
               <div className="space-y-4">
                 <input
+                  type="text"
+                  placeholder="Nome do faturamento (ex: Venda, Serviço)"
+                  value={faturamentoNome}
+                  onChange={(e) => setFaturamentoNome(e.target.value)}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-orange-500 focus:outline-none"
+                />
+
+                <input
                   type="number"
                   placeholder="Valor do faturamento"
                   value={faturamentoDia}
@@ -517,6 +528,14 @@ function DashboardFinanceiro() {
                 <X size={24} />
               </button>
             </div>
+
+            <input
+              type="text"
+              placeholder="Nome do faturamento"
+              value={faturamentoNome}
+              onChange={(e) => setFaturamentoNome(e.target.value)}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white mb-4 focus:border-orange-500 focus:outline-none"
+            />
 
             <input
               type="number"

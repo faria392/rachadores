@@ -129,7 +129,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
             </p>
           </div>
 
-          {/* Card 2: Lucro da Semana */}
+          {}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Lucro da Semana</p>
             <p className={`text-3xl font-bold ${getProfitColor(lucroSemana)}`}>
