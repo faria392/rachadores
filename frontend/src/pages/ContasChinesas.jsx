@@ -7,15 +7,12 @@ import '../pages/ContasChinesas.css';
 
 const ContasChinesas = () => {
   const navigate = useNavigate();
-  const [contas69B, setContas69B] = useState([]);
-  const [contas69A, setContas69A] = useState([]);
+  const [tabelas, setTabelas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState('');
-
-  const MOCK_DATA_69B = [];
-
-  const MOCK_DATA_69A = [];
+  const [novaTabela, setNovaTabela] = useState('');
+  const [mostraFormulario, setMostraFormulario] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -33,112 +30,125 @@ const ContasChinesas = () => {
       const response = await contasChinesesService.getAll();
       const contas = response.data || [];
       
-      const contas69B = contas.filter(c => c.dominio === '69B');
-      const contas69A = contas.filter(c => c.dominio === '69A');
-      
-      setContas69B(contas69B.length > 0 ? contas69B : MOCK_DATA_69B);
-      setContas69A(contas69A.length > 0 ? contas69A : MOCK_DATA_69A);
+      // Agrupar contas por domínio (nome da tabela)
+      const tabelasAgrupadas = {};
+      contas.forEach(conta => {
+        if (!tabelasAgrupadas[conta.dominio]) {
+          tabelasAgrupadas[conta.dominio] = {
+            id: conta.dominio,
+            nome: conta.dominio,
+            contas: []
+          };
+        }
+        tabelasAgrupadas[conta.dominio].contas.push(conta);
+      });
+
+      setTabelas(Object.values(tabelasAgrupadas));
     } catch (error) {
       console.error('Erro ao carregar dados da API:', error);
-      // Se falhar, usa dados mockados
-      setContas69B(MOCK_DATA_69B);
-      setContas69A(MOCK_DATA_69A);
+      setTabelas([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const saveData = async () => {
-    try {
-      setSaving(true);
-      
-      // Sincronizar dados com a API
-      for (const conta of contas69B) {
-        if (conta.id > 1000000) { // Novos registros têm IDs temporários
-          await contasChinesesService.addConta({
-            ...conta,
-            dominio: '69B'
-          });
-        } else {
-          await contasChinesesService.updateConta(conta.id, {
-            ...conta,
-            dominio: '69B'
-          });
-        }
-      }
-      
-      for (const conta of contas69A) {
-        if (conta.id > 1000000) { // Novos registros têm IDs temporários
-          await contasChinesesService.addConta({
-            ...conta,
-            dominio: '69A'
-          });
-        } else {
-          await contasChinesesService.updateConta(conta.id, {
-            ...conta,
-            dominio: '69A'
-          });
-        }
-      }
-      
-      setFeedback('✓ Dados salvos com sucesso!');
+  const adicionarNovaTabela = () => {
+    if (!novaTabela.trim()) {
+      setFeedback('⚠️ Digite um nome para a tabela');
       setTimeout(() => setFeedback(''), 3000);
-      
-      // Recarregar para sincronizar IDs
-      await loadData();
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      setFeedback('✗ Erro ao salvar dados');
-      setTimeout(() => setFeedback(''), 3000);
-    } finally {
-      setSaving(false);
+      return;
     }
-  };
 
-  const updateConta = (tipo, id, field, value) => {
-    const setter = tipo === '69B' ? setContas69B : setContas69A;
-    const data = tipo === '69B' ? contas69B : contas69A;
+    // Verificar se já existe tabela com esse nome
+    if (tabelas.some(t => t.nome === novaTabela.trim())) {
+      setFeedback('⚠️ Já existe uma tabela com esse nome');
+      setTimeout(() => setFeedback(''), 3000);
+      return;
+    }
 
-    const updated = data.map(conta =>
-      conta.id === id ? { ...conta, [field]: value } : conta
-    );
-    setter(updated);
-  };
-
-  const addConta = (tipo) => {
-    const setter = tipo === '69B' ? setContas69B : setContas69A;
-    const data = tipo === '69B' ? contas69B : contas69A;
-
-    // Gerar um ID temporário para novos registros
-    const newId = Date.now() + Math.random() * 1000000;
-    const novaConta = {
-      id: newId,
-      telefone: '',
-      pix: '',
-      cpf: '',
-      nome: '',
-      saldo: 0,
-      status: 'Ativa',
-      tipo: 'NOVA',
-      dominio: tipo === '69B' ? '69B' : '69A'
+    const novaTab = {
+      id: Date.now().toString(),
+      nome: novaTabela.trim(),
+      contas: []
     };
-    setter([...data, novaConta]);
+
+    setTabelas([...tabelas, novaTab]);
+    setNovaTabela('');
+    setMostraFormulario(false);
+    setFeedback('✓ Tabela criada com sucesso!');
+    setTimeout(() => setFeedback(''), 3000);
   };
 
-  const deleteConta = async (tipo, id) => {
+  const deletarTabela = (tabelaId) => {
+    setTabelas(tabelas.filter(t => t.id !== tabelaId));
+    setFeedback('✓ Tabela removida com sucesso!');
+    setTimeout(() => setFeedback(''), 3000);
+  };
+
+  const updateConta = (tabelaId, contaId, field, value) => {
+    setTabelas(tabelas.map(tabela => {
+      if (tabela.id === tabelaId) {
+        return {
+          ...tabela,
+          contas: tabela.contas.map(conta =>
+            conta.id === contaId ? { ...conta, [field]: value } : conta
+          )
+        };
+      }
+      return tabela;
+    }));
+  };
+
+  const addConta = (tabelaId) => {
+    setTabelas(tabelas.map(tabela => {
+      if (tabela.id === tabelaId) {
+        const newId = Date.now() + Math.random() * 1000000;
+        const novaConta = {
+          id: newId,
+          telefone: '',
+          pix: '',
+          cpf: '',
+          nome: '',
+          saldo: 0,
+          status: 'Ativa',
+          tipo: 'NOVA',
+          dominio: tabela.nome
+        };
+        return {
+          ...tabela,
+          contas: [...tabela.contas, novaConta]
+        };
+      }
+      return tabela;
+    }));
+  };
+
+  const deleteConta = async (tabelaId, contaId) => {
     try {
       // Se for um ID temporário, apenas remove localmente
-      if (id > 1000000) {
-        const setter = tipo === '69B' ? setContas69B : setContas69A;
-        const data = tipo === '69B' ? contas69B : contas69A;
-        setter(data.filter(conta => conta.id !== id));
+      if (contaId > 1000000) {
+        setTabelas(tabelas.map(tabela => {
+          if (tabela.id === tabelaId) {
+            return {
+              ...tabela,
+              contas: tabela.contas.filter(c => c.id !== contaId)
+            };
+          }
+          return tabela;
+        }));
       } else {
         // Deleta da API
-        await contasChinesesService.deleteConta(id);
+        await contasChinesesService.deleteConta(contaId);
         
-        const setter = tipo === '69B' ? setContas69B : setContas69A;
-        const data = tipo === '69B' ? contas69B : contas69A;
-        setter(data.filter(conta => conta.id !== id));
+        setTabelas(tabelas.map(tabela => {
+          if (tabela.id === tabelaId) {
+            return {
+              ...tabela,
+              contas: tabela.contas.filter(c => c.id !== contaId)
+            };
+          }
+          return tabela;
+        }));
         
         setFeedback('✓ Conta removida com sucesso!');
         setTimeout(() => setFeedback(''), 3000);
@@ -159,15 +169,54 @@ const ContasChinesas = () => {
     };
   };
 
-  const totals69B = calculateTotals(contas69B);
-  const totals69A = calculateTotals(contas69A);
+  const saveData = async () => {
+    try {
+      setSaving(true);
+      
+      // Sincronizar todas as contas com a API
+      for (const tabela of tabelas) {
+        for (const conta of tabela.contas) {
+          if (conta.id > 1000000) { // Novos registros
+            await contasChinesesService.addConta({
+              ...conta,
+              dominio: tabela.nome
+            });
+          } else {
+            await contasChinesesService.updateConta(conta.id, {
+              ...conta,
+              dominio: tabela.nome
+            });
+          }
+        }
+      }
+      
+      setFeedback('✓ Dados salvos com sucesso!');
+      setTimeout(() => setFeedback(''), 3000);
+      await loadData();
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      setFeedback('✗ Erro ao salvar dados');
+      setTimeout(() => setFeedback(''), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  const TabelaContas = ({ titulo, dominio, contas, tipo }) => {
-    const totals = tipo === '69B' ? totals69B : totals69A;
+  const TabelaContas = ({ tabela }) => {
+    const totals = calculateTotals(tabela.contas);
 
     return (
       <div className="tabela-container">
-        <h2 className="tabela-titulo">EDITAR {titulo} - {dominio}</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="tabela-titulo">EDITAR {tabela.nome}</h2>
+          <button
+            className="btn-delete-tabela"
+            onClick={() => deletarTabela(tabela.id)}
+            title="Deletar tabela"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
         
         <div className="tabela-wrapper">
           <table className="tabela-contas">
@@ -184,13 +233,13 @@ const ContasChinesas = () => {
               </tr>
             </thead>
             <tbody>
-              {contas.map((conta, idx) => (
+              {tabela.contas.map((conta, idx) => (
                 <tr key={conta.id} className={idx % 2 === 0 ? 'zebra-par' : 'zebra-impar'}>
                   <td className="celula-telefone">
                     <input
                       type="text"
                       value={conta.telefone}
-                      onChange={(e) => updateConta(tipo, conta.id, 'telefone', e.target.value)}
+                      onChange={(e) => updateConta(tabela.id, conta.id, 'telefone', e.target.value)}
                       placeholder="11987654321"
                     />
                   </td>
@@ -198,7 +247,7 @@ const ContasChinesas = () => {
                     <input
                       type="text"
                       value={conta.pix}
-                      onChange={(e) => updateConta(tipo, conta.id, 'pix', e.target.value)}
+                      onChange={(e) => updateConta(tabela.id, conta.id, 'pix', e.target.value)}
                       placeholder="Digite a chave PIX"
                       className="input-pix"
                     />
@@ -207,7 +256,7 @@ const ContasChinesas = () => {
                     <input
                       type="text"
                       value={conta.cpf}
-                      onChange={(e) => updateConta(tipo, conta.id, 'cpf', e.target.value)}
+                      onChange={(e) => updateConta(tabela.id, conta.id, 'cpf', e.target.value)}
                       placeholder="123.456.789-00"
                     />
                   </td>
@@ -215,7 +264,7 @@ const ContasChinesas = () => {
                     <input
                       type="text"
                       value={conta.nome}
-                      onChange={(e) => updateConta(tipo, conta.id, 'nome', e.target.value)}
+                      onChange={(e) => updateConta(tabela.id, conta.id, 'nome', e.target.value)}
                       placeholder="Nome do cliente"
                     />
                   </td>
@@ -223,7 +272,7 @@ const ContasChinesas = () => {
                     <input
                       type="number"
                       value={conta.saldo}
-                      onChange={(e) => updateConta(tipo, conta.id, 'saldo', Number(e.target.value))}
+                      onChange={(e) => updateConta(tabela.id, conta.id, 'saldo', Number(e.target.value))}
                       placeholder="0.00"
                       step="0.01"
                       className="input-saldo"
@@ -232,7 +281,7 @@ const ContasChinesas = () => {
                   <td className="celula-status">
                     <select
                       value={conta.status}
-                      onChange={(e) => updateConta(tipo, conta.id, 'status', e.target.value)}
+                      onChange={(e) => updateConta(tabela.id, conta.id, 'status', e.target.value)}
                       className={`select-status ${conta.status === 'Ativa' ? 'ativa' : 'inativa'}`}
                     >
                       <option value="Ativa">Ativa</option>
@@ -242,7 +291,7 @@ const ContasChinesas = () => {
                   <td className="celula-tipo">
                     <select
                       value={conta.tipo}
-                      onChange={(e) => updateConta(tipo, conta.id, 'tipo', e.target.value)}
+                      onChange={(e) => updateConta(tabela.id, conta.id, 'tipo', e.target.value)}
                     >
                       <option value="NOVA">NOVA</option>
                       <option value="ANTIGA">ANTIGA</option>
@@ -251,7 +300,7 @@ const ContasChinesas = () => {
                   <td className="celula-acoes">
                     <button
                       className="btn-delete"
-                      onClick={() => deleteConta(tipo, conta.id)}
+                      onClick={() => deleteConta(tabela.id, conta.id)}
                       title="Deletar conta"
                     >
                       <Trash2 size={16} />
@@ -291,7 +340,7 @@ const ContasChinesas = () => {
             </div>
           </div>
 
-          <button className="btn-add-conta" onClick={() => addConta(tipo)}>
+          <button className="btn-add-conta" onClick={() => addConta(tabela.id)}>
             <Plus size={18} /> Adicionar Conta
           </button>
         </div>
@@ -353,48 +402,91 @@ const ContasChinesas = () => {
               <RefreshCw size={18} />
               Recarregar
             </button>
+            <button 
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              onClick={() => setMostraFormulario(!mostraFormulario)}
+            >
+              <Plus size={18} />
+              {mostraFormulario ? 'Cancelar' : 'Adicionar Tabela'}
+            </button>
           </div>
 
-          {/* Tabelas lado a lado */}
+          {/* Formulário para Nova Tabela */}
+          {mostraFormulario && (
+            <div className="mb-6 p-4 bg-zinc-800 border border-purple-500 rounded-lg">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-300 mb-2">Nome da Tabela</label>
+                  <input
+                    type="text"
+                    value={novaTabela}
+                    onChange={(e) => setNovaTabela(e.target.value)}
+                    placeholder="Ex: 69B.com, WhatsApp Group, etc"
+                    className="w-full px-4 py-2 bg-zinc-700 border border-purple-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                    onKeyPress={(e) => e.key === 'Enter' && adicionarNovaTabela()}
+                  />
+                </div>
+                <button 
+                  className="flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  onClick={adicionarNovaTabela}
+                >
+                  <Plus size={18} />
+                  Criar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tabelas */}
           <div className="grid grid-cols-1 gap-8 mb-8">
-            <TabelaContas
-              titulo="TABELA"
-              dominio="69B.com"
-              contas={contas69B}
-              tipo="69B"
-            />
+            {tabelas.length > 0 ? (
+              tabelas.map(tabela => (
+                <TabelaContas key={tabela.id} tabela={tabela} />
+              ))
+            ) : (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-lg">Nenhuma tabela criada ainda.</p>
+                <p className="text-sm">Clique em "Adicionar Tabela" para começar.</p>
+              </div>
+            )}
           </div>
 
-          {/* Resumo Geral */}
-          <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
-            <h2 className="text-2xl font-bold text-gray-100 mb-6">Resumo Geral 69B.com</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-blue-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total de Contas</div>
-                <div className="text-3xl font-bold text-gray-100 mt-2">
-                  {totals69B.totalContas}
+          {/* Resumo Total */}
+          {tabelas.length > 0 && (
+            <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+              <h2 className="text-2xl font-bold text-gray-100 mb-6">Resumo Total</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-blue-500">
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total de Tabelas</div>
+                  <div className="text-3xl font-bold text-gray-100 mt-2">
+                    {tabelas.length}
+                  </div>
                 </div>
-              </div>
-              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Total 69B</div>
-                <div className={`text-3xl font-bold mt-2 ${totals69B.totalSaldo < 0 ? 'text-red-400' : 'text-gray-100'}`}>
-                  R$ {totals69B.totalSaldo.toFixed(2).replace('.', ',')}
+                <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total de Contas</div>
+                  <div className="text-3xl font-bold text-gray-100 mt-2">
+                    {tabelas.reduce((sum, t) => sum + t.contas.length, 0)}
+                  </div>
                 </div>
-              </div>
-              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contas Ativas</div>
-                <div className="text-3xl font-bold text-green-400 mt-2">
-                  {totals69B.contasAtivas}
+                <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-yellow-500">
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Total</div>
+                  <div className={`text-3xl font-bold mt-2 ${
+                    tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0) < 0 
+                      ? 'text-red-400' 
+                      : 'text-gray-100'
+                  }`}>
+                    R$ {tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0).toFixed(2).replace('.', ',')}
+                  </div>
                 </div>
-              </div>
-              <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-red-500">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contas Inativas</div>
-                <div className="text-3xl font-bold text-red-400 mt-2">
-                  {totals69B.contasInativas}
+                <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contas Ativas</div>
+                  <div className="text-3xl font-bold text-green-400 mt-2">
+                    {tabelas.reduce((sum, t) => sum + t.contas.filter(c => c.status === 'Ativa').length, 0)}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
     </div>
