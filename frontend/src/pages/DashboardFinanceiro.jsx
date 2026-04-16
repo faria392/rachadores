@@ -62,13 +62,15 @@ function DashboardFinanceiro() {
     }
   }, [navigate]);
 
-  // Carrega dados do dia
+  // Carrega dados do dia - com logging
   useEffect(() => {
+    console.log('📅 Carregando dados para a data:', dataSelecionada);
     carregarDadosDia();
   }, [dataSelecionada]);
 
-  // Carrega todos os dados para gráficos
+  // Carrega todos os dados para gráficos - apenas uma vez
   useEffect(() => {
+    console.log('📊 Carregando dados totais para gráficos');
     carregarTodosDados();
   }, []);
 
@@ -79,7 +81,9 @@ function DashboardFinanceiro() {
   const carregarDadosDia = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Requisição: GET /api/financial/day/' + dataSelecionada);
       const response = await financialService.getDayData(dataSelecionada);
+      console.log('✅ Resposta recebida:', response.data);
       setDados({
         faturamento: response.data.faturamento || 0,
         gastos: response.data.gastos || [],
@@ -88,8 +92,15 @@ function DashboardFinanceiro() {
       });
       setFaturamentoDia(response.data.faturamento?.toString() || '');
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      mostrarFeedback('Erro ao carregar dados do dia', 'error');
+      console.error('❌ Erro ao carregar dados:', error.response?.data || error.message);
+      mostrarFeedback('❌ Erro ao carregar dados: ' + (error.response?.data?.error || error.message), 'error');
+      // Define dados vazios para não ficar congelado
+      setDados({
+        faturamento: 0,
+        gastos: [],
+        totalGastos: 0,
+        lucro: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -97,10 +108,13 @@ function DashboardFinanceiro() {
 
   const carregarTodosDados = async () => {
     try {
+      console.log('🔄 Requisição: GET /api/financial/summary');
       const response = await financialService.getSummary();
+      console.log('✅ Resposta recebida:', response.data);
       setTodosOsDados(response.data);
     } catch (error) {
-      console.error('Erro ao carregar resumo:', error);
+      console.error('❌ Erro ao carregar resumo:', error.response?.data || error.message);
+      setTodosOsDados({ revenues: [], expenses: [] });
     }
   };
 
