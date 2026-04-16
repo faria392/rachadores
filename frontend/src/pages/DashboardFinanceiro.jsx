@@ -22,10 +22,9 @@ const DashboardFinanceiro = () => {
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
   const [faturamentoDia, setFaturamentoDia] = useState('');
   const [despesaValor, setDespesaValor] = useState('');
+  const [despesaNome, setDespesaNome] = useState('');
   const [dados, setDados] = useState([]);
   const [feedbackMsg, setFeedbackMsg] = useState('');
-
-  const categorias = ['Alimentação', 'Transporte', 'Marketing', 'Tecnologia', 'Outros'];
 
   // Verificar autenticação
   useEffect(() => {
@@ -107,6 +106,11 @@ const DashboardFinanceiro = () => {
       return;
     }
 
+    if (!despesaNome.trim()) {
+      mostrarFeedback('⚠️ Digite um nome para o gasto');
+      return;
+    }
+
     setDados(prevDados => {
       const novosDados = [...prevDados];
       let indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
@@ -123,12 +127,14 @@ const DashboardFinanceiro = () => {
       novosDados[indexDia].gastos.push({
         id: Date.now(),
         valor: parseFloat(despesaValor),
+        nome: despesaNome.trim(),
       });
 
       return novosDados;
     });
 
     setDespesaValor('');
+    setDespesaNome('');
     mostrarFeedback('✅ Gasto adicionado com sucesso!');
   };
 
@@ -282,6 +288,19 @@ const DashboardFinanceiro = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Nome do Gasto
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Almoço, Uber, Supplies..."
+                  value={despesaNome}
+                  onChange={(e) => setDespesaNome(e.target.value)}
+                  className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
                   Valor
                 </label>
                 <div className="relative">
@@ -315,13 +334,13 @@ const DashboardFinanceiro = () => {
             <p className="text-gray-500 text-center py-8">Nenhum gasto registrado para este dia</p>
           ) : (
             <div className="space-y-3">
-              {dadosDiaAtual.gastos.map((gasto, index) => (
+              {dadosDiaAtual.gastos.map((gasto) => (
                 <div
                   key={gasto.id}
                   className="flex items-center justify-between bg-zinc-800 p-4 rounded-lg border border-zinc-700 hover:border-red-500 transition"
                 >
                   <div className="flex-1">
-                    <p className="text-gray-300">Gasto #{index + 1}</p>
+                    <p className="text-gray-100 font-semibold">{gasto.nome}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-lg font-bold text-red-400">
