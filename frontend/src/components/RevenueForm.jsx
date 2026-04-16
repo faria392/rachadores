@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { revenueService } from '../services/api';
+import { getTodayBrasil } from '../utils/dateFormatter';
 import { Check, AlertCircle, Plus, Edit2 } from 'lucide-react';
 
 function RevenueForm({ onRevenueAdded, initialData = null }) {
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getTodayBrasil());
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -46,7 +47,7 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
       }
       
       setAmount('');
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(getTodayBrasil());
       
       setTimeout(() => {
         onRevenueAdded?.();

@@ -5,12 +5,13 @@ import ChartComponent from '../components/ChartComponent';
 import RankingTable from '../components/RankingTable';
 import LeaderAlert, { ALERT_TYPES } from '../components/LeaderAlert';
 import { revenueService } from '../services/api';
+import { getTodayBrasil } from '../utils/dateFormatter';
 import { useAchievementDetection } from '../hooks/useAchievementDetection';
 import { TrendingUp, Calendar, BarChart3, RefreshCw } from 'lucide-react';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
-  const [today] = useState(new Date().toISOString().split('T')[0]);
+  const [today] = useState(getTodayBrasil());
   const [todayAmount, setTodayAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const [userPosition, setUserPosition] = useState(null);

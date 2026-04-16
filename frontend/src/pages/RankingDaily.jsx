@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import RankingTable from '../components/RankingTable';
 import { revenueService } from '../services/api';
+import { formatDateBrasil, getTodayBrasil } from '../utils/dateFormatter';
 import { RefreshCw, Calendar } from 'lucide-react';
 
 
 function RankingDaily() {
   const [ranking, setRanking] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getTodayBrasil());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
@@ -56,13 +57,7 @@ function RankingDaily() {
   };
 
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    return formatDateBrasil(dateStr);
   };
 
   return (

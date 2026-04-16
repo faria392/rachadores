@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { revenueService } from '../services/api';
+import { formatDateBrasil, getTodayBrasil } from '../utils/dateFormatter';
 import { RefreshCw, History, Edit2, Trash2 } from 'lucide-react';
 
 function HistoryPage() {
@@ -50,13 +51,7 @@ function HistoryPage() {
   };
 
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
-    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-    const diaSemana = diasSemana[date.getDay()];
-    const dia = date.getDate();
-    const mês = date.toLocaleDateString('pt-BR', { month: 'long' });
-    
-    return `${diaSemana}, ${dia} de ${mês}`;
+    return formatDateBrasil(dateStr);
   };
 
   const formatCurrency = (value) => {
