@@ -59,12 +59,8 @@ function DashboardFinanceiro() {
   useEffect(() => {
     console.log('📅 Carregando dados para a data:', dataSelecionada);
     carregarDadosDia();
-  }, [dataSelecionada]);
-
-  useEffect(() => {
-    console.log('📊 Carregando dados totais para gráficos');
     carregarTodosDados();
-  }, []);
+  }, [dataSelecionada]);
 
   const carregarDadosDia = async () => {
     try {
