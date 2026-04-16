@@ -11,20 +11,15 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from 'recharts';
-import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon, RefreshCw } from 'lucide-react';
+import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 
 const DashboardFinanceiro = () => {
   const navigate = useNavigate();
-  const navigate = useNavigate();
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
   const [faturamentoDia, setFaturamentoDia] = useState('');
   const [despesaValor, setDespesaValor] = useState('');
-  const [despesaCategoria, setDespesaCategoria] = useState('Alimentação');
-  const [despesaDescricao, setDespesaDescricao] = useState('');
   const [dados, setDados] = useState([]);
   const [feedbackMsg, setFeedbackMsg] = useState('');
 
@@ -126,15 +121,12 @@ const DashboardFinanceiro = () => {
       novosDados[indexDia].gastos.push({
         id: Date.now(),
         valor: parseFloat(despesaValor),
-        categoria: despesaCategoria,
-        descricao: despesaDescricao,
       });
 
       return novosDados;
     });
 
     setDespesaValor('');
-    setDespesaDescricao('');
     mostrarFeedback('✅ Gasto adicionado com sucesso!');
   };
 
@@ -166,29 +158,7 @@ const DashboardFinanceiro = () => {
       }));
   };
 
-  // Preparar dados para gráfico de categorias
-  const prepararDadosCategorias = () => {
-    const categoriasTotais = {};
-    categorias.forEach(cat => {
-      categoriasTotais[cat] = 0;
-    });
-
-    dadosDiaAtual.gastos.forEach(gasto => {
-      if (categoriasTotais.hasOwnProperty(gasto.categoria)) {
-        categoriasTotais[gasto.categoria] += gasto.valor;
-      }
-    });
-
-    return Object.entries(categoriasTotais)
-      .filter(([_, valor]) => valor > 0)
-      .map(([categoria, valor]) => ({
-        categoria,
-        valor,
-      }));
-  };
-
   const dadosGraficos = prepararDadosGraficos();
-  const dadosCategorias = prepararDadosCategorias();
 
   return (
     <div className="flex min-h-screen bg-zinc-950">
@@ -308,54 +278,22 @@ const DashboardFinanceiro = () => {
           <div className="bg-zinc-900 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-100 mb-4">🛒 Adicionar Gasto</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">
-                    Valor
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-gray-500">R$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0,00"
-                      value={despesaValor}
-                      onChange={(e) => setDespesaValor(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">
-                    Categoria
-                  </label>
-                  <select
-                    value={despesaCategoria}
-                    onChange={(e) => setDespesaCategoria(e.target.value)}
-                    className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  >
-                    {categorias.map(cat => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
-                  Descrição (opcional)
+                  Valor
                 </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Almoço com cliente"
-                  value={despesaDescricao}
-                  onChange={(e) => setDespesaDescricao(e.target.value)}
-                  className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-gray-500">R$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={despesaValor}
+                    onChange={(e) => setDespesaValor(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
+                  />
+                </div>
               </div>
 
               <button
@@ -375,21 +313,13 @@ const DashboardFinanceiro = () => {
             <p className="text-gray-500 text-center py-8">Nenhum gasto registrado para este dia</p>
           ) : (
             <div className="space-y-3">
-              {dadosDiaAtual.gastos.map(gasto => (
+              {dadosDiaAtual.gastos.map((gasto, index) => (
                 <div
                   key={gasto.id}
                   className="flex items-center justify-between bg-zinc-800 p-4 rounded-lg border border-zinc-700 hover:border-red-500 transition"
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <div>
-                        <p className="font-semibold text-gray-100">{gasto.categoria}</p>
-                        {gasto.descricao && (
-                          <p className="text-sm text-gray-400">{gasto.descricao}</p>
-                        )}
-                      </div>
-                    </div>
+                    <p className="text-gray-300">Gasto #{index + 1}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-lg font-bold text-red-400">
@@ -483,24 +413,7 @@ const DashboardFinanceiro = () => {
           </div>
         </div>
 
-        {/* Gráfico de Categorias */}
-        {dadosCategorias.length > 0 && (
-          <div className="bg-zinc-900 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-bold text-gray-100 mb-4">📊 Gastos por Categoria (Hoje)</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dadosCategorias}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="categoria" style={{ fontSize: '12px', fill: '#999' }} />
-                <YAxis style={{ fontSize: '12px', fill: '#999' }} />
-                <Tooltip
-                  formatter={(value) => `R$ ${value.toFixed(2)}`}
-                  contentStyle={{ backgroundColor: '#27272a', border: '1px solid #666', color: '#fff' }}
-                />
-                <Bar dataKey="valor" fill="#ef4444" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        </div>
       </main>
     </div>
   );
