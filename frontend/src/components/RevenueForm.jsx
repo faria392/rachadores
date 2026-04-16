@@ -12,7 +12,11 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
 
   useEffect(() => {
     if (initialData) {
-      setDate(initialData.date);
+      // Garantir que a data está no formato YYYY-MM-DD
+      const dateStr = initialData.date.includes('T') 
+        ? initialData.date.split('T')[0] 
+        : initialData.date;
+      setDate(dateStr);
       setAmount(initialData.amount.toString());
       setIsEditing(true);
     }
@@ -72,7 +76,7 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
       </h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Campo de Data */}
+        {}
         <div>
           <label htmlFor="date" className="block text-sm font-semibold text-gray-300 mb-2">
             Data
@@ -87,7 +91,7 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
           />
         </div>
 
-        {/* Campo de Valor */}
+        {}
         <div>
           <label htmlFor="amount" className="block text-sm font-semibold text-gray-300 mb-2">
             Valor (R$)
