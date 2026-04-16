@@ -11,6 +11,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  BarChart,
+  Bar,
 } from 'recharts';
 import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -244,7 +246,7 @@ const DashboardFinanceiro = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Formulário de Faturamento */}
           <div className="bg-zinc-900 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-100 mb-4">💵 Registrar Faturamento</h2>
+            <h2 className="text-xl font-bold text-gray-100 mb-4">Registrar Faturamento</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
@@ -276,7 +278,7 @@ const DashboardFinanceiro = () => {
 
           {/* Formulário de Gastos */}
           <div className="bg-zinc-900 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-100 mb-4">🛒 Adicionar Gasto</h2>
+            <h2 className="text-xl font-bold text-gray-100 mb-4">Adicionar Gasto</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
@@ -308,7 +310,7 @@ const DashboardFinanceiro = () => {
 
         {/* Lista de Gastos */}
         <div className="bg-zinc-900 rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-100 mb-4">📋 Gastos do Dia</h2>
+          <h2 className="text-xl font-bold text-gray-100 mb-4">Gastos do Dia</h2>
           {dadosDiaAtual.gastos.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Nenhum gasto registrado para este dia</p>
           ) : (
@@ -340,14 +342,14 @@ const DashboardFinanceiro = () => {
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Gráfico de Linha - Faturamento, Gastos e Lucro */}
+          {/* Gráfico de Coluna - Faturamento, Gastos e Lucro */}
           <div className="bg-zinc-900 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-bold text-gray-100 mb-4">📈 Faturamento vs Gastos vs Lucro</h3>
+            <h3 className="text-lg font-bold text-gray-100 mb-4">Faturamento vs Gastos vs Lucro</h3>
             {dadosGraficos.length === 0 ? (
               <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dadosGraficos}>
+                <BarChart data={dadosGraficos}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                   <XAxis dataKey="data" style={{ fontSize: '12px', fill: '#999' }} />
                   <YAxis style={{ fontSize: '12px', fill: '#999' }} />
@@ -356,38 +358,17 @@ const DashboardFinanceiro = () => {
                     contentStyle={{ backgroundColor: '#27272a', border: '1px solid #666', color: '#fff' }}
                   />
                   <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="faturamento"
-                    stroke="#10b981"
-                    dot={{ fill: '#10b981', r: 4 }}
-                    strokeWidth={2}
-                    name="Faturamento"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="gastos"
-                    stroke="#ef4444"
-                    dot={{ fill: '#ef4444', r: 4 }}
-                    strokeWidth={2}
-                    name="Gastos"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="lucro"
-                    stroke="#f97316"
-                    dot={{ fill: '#f97316', r: 4 }}
-                    strokeWidth={2}
-                    name="Lucro"
-                  />
-                </LineChart>
+                  <Bar dataKey="faturamento" fill="#10b981" radius={[8, 8, 0, 0]} name="Faturamento" />
+                  <Bar dataKey="gastos" fill="#ef4444" radius={[8, 8, 0, 0]} name="Gastos" />
+                  <Bar dataKey="lucro" fill="#f97316" radius={[8, 8, 0, 0]} name="Lucro" />
+                </BarChart>
               </ResponsiveContainer>
             )}
           </div>
 
           {/* Gráfico de Área - Lucro */}
           <div className="bg-zinc-900 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-bold text-gray-100 mb-4">💹 Evolução do Lucro</h3>
+            <h3 className="text-lg font-bold text-gray-100 mb-4">Evolução do Lucro</h3>
             {dadosGraficos.length === 0 ? (
               <p className="text-gray-500 text-center py-8">Sem dados para exibir</p>
             ) : (
