@@ -29,6 +29,12 @@ export const revenueService = {
   addRevenue: (amount, date) =>
     api.post('/revenue/add', { amount, date }),
   
+  editRevenue: (amount, date) =>
+    api.put(`/revenue/edit/${date}`, { amount }),
+  
+  deleteRevenue: (date) =>
+    api.delete(`/revenue/delete/${date}`),
+  
   getDayRevenue: (date) =>
     api.get(`/revenue/day/${date}`),
   

@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { revenueService } from '../services/api';
-import { Check, AlertCircle, Plus } from 'lucide-react';
+import { Check, AlertCircle, Plus, Edit2 } from 'lucide-react';
 
-function RevenueForm({ onRevenueAdded }) {
+function RevenueForm({ onRevenueAdded, initialData = null }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setDate(initialData.date);
+      setAmount(initialData.amount.toString());
+      setIsEditing(true);
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,8 +33,14 @@ function RevenueForm({ onRevenueAdded }) {
     setLoading(true);
 
     try {
-      await revenueService.addRevenue(numAmount, date);
-      setSuccess('Faturamento registrado com sucesso!');
+      if (isEditing) {
+        await revenueService.editRevenue(numAmount, date);
+        setSuccess('Faturamento atualizado com sucesso!');
+      } else {
+        await revenueService.addRevenue(numAmount, date);
+        setSuccess('Faturamento registrado com sucesso!');
+      }
+      
       setAmount('');
       setDate(new Date().toISOString().split('T')[0]);
       
@@ -34,7 +49,7 @@ function RevenueForm({ onRevenueAdded }) {
         setSuccess('');
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao registrar faturamento');
+      setError(err.response?.data?.error || 'Erro ao processar faturamento');
     } finally {
       setLoading(false);
     }
@@ -43,8 +58,17 @@ function RevenueForm({ onRevenueAdded }) {
   return (
     <div className="card">
       <h3 className="text-lg font-bold mb-6 text-gray-100 flex items-center gap-2">
-        <Plus size={24} className="text-orange-500" />
-        Adicionar Faturamento
+        {isEditing ? (
+          <>
+            <Edit2 size={24} className="text-orange-500" />
+            Editar Faturamento
+          </>
+        ) : (
+          <>
+            <Plus size={24} className="text-orange-500" />
+            Adicionar Faturamento
+          </>
+        )}
       </h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -59,7 +83,8 @@ function RevenueForm({ onRevenueAdded }) {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
-            className="input-field"
+            disabled={isEditing}
+            className="input-field disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -107,8 +132,17 @@ function RevenueForm({ onRevenueAdded }) {
               : 'btn-primary hover:bg-orange-600'
           }`}
         >
-          <Plus size={20} />
-          {loading ? 'Registrando...' : 'Registrar Faturamento'}
+          {isEditing ? (
+            <>
+              <Edit2 size={20} />
+              {loading ? 'Atualizando...' : 'Atualizar Faturamento'}
+            </>
+          ) : (
+            <>
+              <Plus size={20} />
+              {loading ? 'Registrando...' : 'Registrar Faturamento'}
+            </>
+          )}
         </button>
       </form>
     </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { revenueService } from '../services/api';
-import { RefreshCw, History, Trash2 } from 'lucide-react';
+import { RefreshCw, History, Edit2, Trash2 } from 'lucide-react';
 
 function HistoryPage() {
   const [history, setHistory] = useState([]);
@@ -63,6 +63,26 @@ function HistoryPage() {
     const numValue = Number(value ?? 0);
     if (isNaN(numValue)) return 'R$ 0,00';
     return `R$ ${numValue.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+  };
+
+  const handleDelete = async (date) => {
+    if (!window.confirm('Tem certeza que deseja deletar este faturamento?')) {
+      return;
+    }
+
+    try {
+      await revenueService.deleteRevenue(date);
+      loadHistory();
+    } catch (error) {
+      console.error('Erro ao deletar faturamento:', error);
+      alert('Erro ao deletar faturamento');
+    }
+  };
+
+  const handleEdit = (record) => {
+    // Armazenar o registro a editar no localStorage
+    localStorage.setItem('editingRevenue', JSON.stringify(record));
+    navigate('/add-revenue', { state: { editing: record } });
   };
 
   return (
@@ -176,6 +196,9 @@ function HistoryPage() {
                           <th className="px-4 py-3 text-right text-gray-400 font-semibold">
                             Faturamento
                           </th>
+                          <th className="px-4 py-3 text-center text-gray-400 font-semibold">
+                            Ações
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -197,6 +220,24 @@ function HistoryPage() {
                               </td>
                               <td className="px-4 py-3 text-right font-bold text-orange-500">
                                 {formatCurrency(record.amount)}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => handleEdit(record)}
+                                    className="p-2 rounded-lg bg-blue-950 hover:bg-blue-900 text-blue-400 transition-all"
+                                    title="Editar"
+                                  >
+                                    <Edit2 size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(record.date)}
+                                    className="p-2 rounded-lg bg-red-950 hover:bg-red-900 text-red-400 transition-all"
+                                    title="Deletar"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );

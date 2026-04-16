@@ -152,12 +152,11 @@ router.get('/ranking/daily/:date', async (req, res) => {
         u.name,
         u.email,
         u.avatarUrl,
-        COALESCE(r.amount, 0) as amount,
-        COALESCE(r.date, ?) as date
+        COALESCE(r.amount, 0) as amount
       FROM users u
       LEFT JOIN revenue r ON u.id = r.user_id AND r.date = ?
       ORDER BY COALESCE(r.amount, 0) DESC, u.name ASC
-    `, [date, date]);
+    `, [date]);
 
     connection.release();
 
@@ -167,7 +166,7 @@ router.get('/ranking/daily/:date', async (req, res) => {
       email: row.email,
       avatarUrl: row.avatarUrl,
       amount: row.amount || 0,
-      date: row.date || date,
+      date: date,
       position: index + 1
     }));
 
@@ -190,12 +189,11 @@ router.get('/ranking/daily', async (req, res) => {
         u.name,
         u.email,
         u.avatarUrl,
-        COALESCE(r.amount, 0) as amount,
-        COALESCE(r.date, ?) as date
+        COALESCE(r.amount, 0) as amount
       FROM users u
       LEFT JOIN revenue r ON u.id = r.user_id AND r.date = ?
       ORDER BY COALESCE(r.amount, 0) DESC, u.name ASC
-    `, [today, today]);
+    `, [today]);
 
     connection.release();
 
@@ -205,13 +203,102 @@ router.get('/ranking/daily', async (req, res) => {
       email: row.email,
       avatarUrl: row.avatarUrl,
       amount: row.amount || 0,
-      date: row.date || today,
+      date: today,
       position: index + 1
     }));
 
     res.json(ranking);
   } catch (error) {
     return res.status(500).json({ error: 'Erro ao obter ranking do dia' });
+  }
+});
+
+// Editar faturamento
+router.put('/edit/:date', verifyToken, async (req, res) => {
+  const { date } = req.params;
+  const { amount } = req.body;
+
+  if (!amount || !date) {
+    return res.status(400).json({ error: 'Valor e data são obrigatórios' });
+  }
+
+  // Garantir que amount é um número válido
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount < 0) {
+    return res.status(400).json({ error: 'Valor deve ser um número positivo' });
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({ error: 'Data deve estar no formato YYYY-MM-DD' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    
+    // Verificar se o registro existe
+    const [existing] = await connection.execute(
+      'SELECT * FROM revenue WHERE user_id = ? AND date = ?',
+      [req.userId, date]
+    );
+
+    if (!existing || existing.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Registro não encontrado' });
+    }
+
+    // Atualizar o faturamento
+    await connection.execute(
+      'UPDATE revenue SET amount = ? WHERE user_id = ? AND date = ?',
+      [numAmount, req.userId, date]
+    );
+
+    connection.release();
+
+    res.json({ 
+      message: 'Faturamento atualizado com sucesso', 
+      amount: numAmount, 
+      date 
+    });
+  } catch (error) {
+    console.error('Erro ao editar faturamento:', error);
+    return res.status(500).json({ error: 'Erro ao editar faturamento' });
+  }
+});
+
+// Deletar faturamento
+router.delete('/delete/:date', verifyToken, async (req, res) => {
+  const { date } = req.params;
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({ error: 'Data deve estar no formato YYYY-MM-DD' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    
+    // Verificar se o registro existe
+    const [existing] = await connection.execute(
+      'SELECT * FROM revenue WHERE user_id = ? AND date = ?',
+      [req.userId, date]
+    );
+
+    if (!existing || existing.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Registro não encontrado' });
+    }
+
+    // Deletar o faturamento
+    await connection.execute(
+      'DELETE FROM revenue WHERE user_id = ? AND date = ?',
+      [req.userId, date]
+    );
+
+    connection.release();
+
+    res.json({ message: 'Faturamento deletado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar faturamento:', error);
+    return res.status(500).json({ error: 'Erro ao deletar faturamento' });
   }
 });
 
