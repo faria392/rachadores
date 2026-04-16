@@ -10,7 +10,7 @@ import History from './pages/History';
 import Achievements from './pages/Achievements';
 import Profile from './pages/Profile';
 import DashboardFinanceiro from './pages/DashboardFinanceiro';
-import ContasChinesas from './pages/ContasChinesas';
+import TableManagement from './pages/TableManagement';
 import './App.css';
 
 function App() {
@@ -21,7 +21,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Rotas Protegidas - cada página valida seu próprio token */}
+        {}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/add-revenue" element={<AddRevenue />} />
         <Route path="/ranking" element={<Ranking />} />
@@ -30,7 +30,7 @@ function App() {
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/financeiro" element={<DashboardFinanceiro />} />
-        <Route path="/contas-chinesas" element={<ContasChinesas />} />
+        <Route path="/tabelas" element={<TableManagement />} />
 
         {/* Redirecionamento Padrão */}
         <Route path="/" element={<Navigate to="/login" />} />

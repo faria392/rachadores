@@ -1,11 +1,17 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Em desenvolvimento: usa proxy do Vite (/api) que redireciona para localhost:5000
+// Em produção: usa VITE_API_URL (deve apontar para o backend real)
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+console.log('🔗 API URL configurada:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000, // 10 segundos de timeout
 });
 
+// Interceptor de requisição - adiciona token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -13,6 +19,20 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Interceptor de resposta - trata erros globais
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('❌ Token inválido ou expirado');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   register: (name, email, password) =>
@@ -61,6 +81,12 @@ export const contasChinesesService = {
   getByDominio: (dominio) =>
     api.get(`/contas-chinesas/dominio/${dominio}`),
   
+  createTabela: (data) =>
+    api.post('/contas-chinesas/tabelas', data),
+  
+  deleteTabela: (id) =>
+    api.delete(`/contas-chinesas/tabelas/${id}`),
+  
   addConta: (data) =>
     api.post('/contas-chinesas', data),
   
@@ -94,6 +120,26 @@ export const userService = {
   },
 
   getProfile: () => api.get('/user/profile'),
+};
+
+export const financialService = {
+  getSummary: () =>
+    api.get('/financial/summary'),
+  
+  getDayData: (date) =>
+    api.get(`/financial/day/${date}`),
+  
+  addRevenue: (date, amount) =>
+    api.post('/financial/revenue', { date, amount }),
+  
+  addExpense: (date, name, amount) =>
+    api.post('/financial/expenses', { date, name, amount }),
+  
+  updateExpense: (id, name, amount) =>
+    api.put(`/financial/expenses/${id}`, { name, amount }),
+  
+  deleteExpense: (id) =>
+    api.delete(`/financial/expenses/${id}`),
 };
 
 export default api;

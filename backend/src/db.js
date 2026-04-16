@@ -100,10 +100,45 @@ async function initializeDatabase() {
       `);
       console.log('✓ Tabela revenue criada/verificada');
 
+      // Tabela de despesas/gastos
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          amount DECIMAL(10, 2) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          date DATE NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          INDEX idx_date (date),
+          INDEX idx_user_date (user_id, date)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela expenses criada/verificada');
+
+      // Tabela de domínios/tabelas chinesas (mapeamento 1:N)
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS tabelas_chinesas (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          nome VARCHAR(100) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          UNIQUE KEY unique_user_nome (user_id, nome)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela tabelas_chinesas criada/verificada');
+
+      // Contas chinesas agora com tabela_id (FK para tabelas_chinesas)
       await poolConnection.execute(`
         CREATE TABLE IF NOT EXISTS contas_chinesas (
           id INT AUTO_INCREMENT PRIMARY KEY,
           user_id INT NOT NULL,
+          tabela_id INT,
           telefone VARCHAR(20),
           pix VARCHAR(100),
           cpf VARCHAR(14),
@@ -111,12 +146,14 @@ async function initializeDatabase() {
           saldo DECIMAL(12, 2) DEFAULT 0,
           status VARCHAR(20) DEFAULT 'Ativa',
           tipo VARCHAR(20) DEFAULT 'NOVA',
-          dominio VARCHAR(10) NOT NULL,
+          dominio VARCHAR(10),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-          INDEX idx_user_dominio (user_id, dominio),
-          INDEX idx_user_id (user_id)
+          FOREIGN KEY (tabela_id) REFERENCES tabelas_chinesas(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          INDEX idx_tabela_id (tabela_id),
+          INDEX idx_user_tabela (user_id, tabela_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
       `);
       console.log('✓ Tabela contas_chinesas criada/verificada');
@@ -168,12 +205,10 @@ async function initializeDatabase() {
     }
   }
 
-  // Chegou aqui = todas as tentativas falharam
   console.error(`\n❌ Falha ao conectar ao banco após 3 tentativas`);
   console.error(`   Último erro: ${lastError.message}\n`);
   console.warn('⚠️ O servidor vai INICIAR mesmo assim em modo FALLBACK\n');
-  
-  // NÃO throw - deixa a aplicação continuar
+
   throw lastError;
 }
 

@@ -20,6 +20,7 @@ import financeiroService from '../services/financeiroService';
 
 const DashboardFinanceiro = () => {
   const navigate = useNavigate();
+
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
   const [faturamentoDia, setFaturamentoDia] = useState('');
   const [despesaValor, setDespesaValor] = useState('');
@@ -218,7 +219,6 @@ const DashboardFinanceiro = () => {
     setEdicaoNome('');
   };
 
-  // Preparar dados para gráficos
   const prepararDadosGraficos = () => {
     return dados
       .sort((a, b) => new Date(a.data) - new Date(b.data))
