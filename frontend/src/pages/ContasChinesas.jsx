@@ -314,6 +314,15 @@ const ContasChinesas = () => {
     };
   };
 
+  const formatarMoeda = (valor) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(valor);
+  };
+
   const saveData = useCallback(async () => {
     try {
       setSaving(true);
@@ -337,7 +346,6 @@ const ContasChinesas = () => {
       
       setFeedback('✓ Dados salvos com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
-      await loadData();
     } catch (error) {
       console.error('Erro ao salvar:', error);
       setFeedback('✗ Erro ao salvar dados');
@@ -398,7 +406,7 @@ const ContasChinesas = () => {
             <div className="linha-total">
               <span className="label">Total Saldo:</span>
               <span className={`valor ${totals.totalSaldo < 0 ? 'negativo' : ''}`}>
-                R$ {totals.totalSaldo.toFixed(2).replace('.', ',')}
+                {formatarMoeda(totals.totalSaldo)}
               </span>
             </div>
           </div>
@@ -554,7 +562,7 @@ const ContasChinesas = () => {
                       ? 'text-red-400' 
                       : 'text-gray-100'
                   }`}>
-                    R$ {tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0).toFixed(2).replace('.', ',')}
+                    {formatarMoeda(tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0))}
                   </div>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
