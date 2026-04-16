@@ -44,6 +44,23 @@ const DashboardFinanceiro = () => {
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       }
+    } else {
+      // Adicionar dados de exemplo na primeira vez
+      const dataAtual = new Date().toISOString().split('T')[0];
+      const exemplos = [
+        {
+          data: dataAtual,
+          faturamento: 1500,
+          gastos: [
+            { id: 1, nome: 'Sure', valor: 100 },
+            { id: 2, nome: 'Anúncio', valor: 250 },
+            { id: 3, nome: 'Fumo', valor: 75 },
+            { id: 4, nome: 'Combustível', valor: 120 },
+            { id: 5, nome: 'Uber', valor: 45 },
+          ],
+        },
+      ];
+      setDados(exemplos);
     }
   }, []);
 
@@ -292,7 +309,7 @@ const DashboardFinanceiro = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Almoço, Uber, Supplies..."
+                  placeholder="Ex:Anúncio, Fumo..."
                   value={despesaNome}
                   onChange={(e) => setDespesaNome(e.target.value)}
                   className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
