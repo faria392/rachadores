@@ -7,7 +7,6 @@ const router = express.Router();
 // Middleware para autenticação
 router.use(authenticateToken);
 
-// Obter todas as contas chinesas do usuário
 router.get('/', async (req, res) => {
   try {
     const userId = req.user.id;
