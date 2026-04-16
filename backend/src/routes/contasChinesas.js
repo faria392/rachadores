@@ -52,8 +52,8 @@ router.post('/', async (req, res) => {
     const userId = req.user.id;
     const { telefone, pix, cpf, nome, saldo, status, tipo, dominio } = req.body;
 
-    if (!dominio || !['69B', '69A'].includes(dominio)) {
-      return res.status(400).json({ error: 'Domínio inválido' });
+    if (!dominio) {
+      return res.status(400).json({ error: 'Domínio é obrigatório' });
     }
 
     const connection = await pool.getConnection();

@@ -60,7 +60,7 @@ const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
         onUpdate(tabela.id, conta.id, field, value);
       }
     } catch (error) {
-      console.error('Erro ao salvar campo no banco:', error);
+      console.error('❌ ERRO ao salvar campo:', error.response?.data || error.message || error);
     }
   };
 
@@ -514,7 +514,7 @@ const ContasChinesas = () => {
               console.log('Conta atualizada:', response);
             }
           } catch (error) {
-            console.error('Erro ao salvar conta individual:', conta, error);
+            console.error('❌ ERRO ao salvar conta:', conta.id, error.response?.data || error.message || error);
           }
         }
       }
