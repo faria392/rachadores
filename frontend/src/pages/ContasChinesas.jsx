@@ -41,7 +41,7 @@ const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
   const saveFieldToDatabase = async (field, value) => {
     try {
       // Se for um ID temporário, apenas atualiza localmente
-      if (conta.id > 1000000) {
+      if (String(conta.id).startsWith('temp')) {
         onUpdate(tabela.id, conta.id, field, value);
       } else {
         // Envia imediatamente para o banco de dados
@@ -334,17 +334,13 @@ const ContasChinesas = () => {
         dominio: novaTabela.trim()
       });
 
-      const novaTab = {
-        id: Date.now().toString(),
-        nome: novaTabela.trim(),
-        contas: []
-      };
-
-      setTabelas(prevTabelas => [...prevTabelas, novaTab]);
       setNovaTabela('');
       setMostraFormulario(false);
       setFeedback('✓ Tabela criada e salva com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
+      
+      // Recarrega os dados para sincronizar a tabela do banco
+      await loadData();
     } catch (error) {
       console.error('Erro ao criar tabela:', error);
       setFeedback('✗ Erro ao criar tabela');
@@ -397,7 +393,7 @@ const ContasChinesas = () => {
   const addConta = useCallback((tabelaId) => {
     setTabelas(prevTabelas => prevTabelas.map(tabela => {
       if (tabela.id === tabelaId) {
-        const newId = Math.floor(Date.now() * 1000 + Math.random() * 1000000);
+        const newId = 'temp-' + Date.now();
         const novaConta = {
           id: newId,
           telefone: '',
@@ -421,7 +417,7 @@ const ContasChinesas = () => {
   const deleteConta = useCallback(async (tabelaId, contaId) => {
     try {
       // Se for um ID temporário, apenas remove localmente
-      if (contaId > 1000000) {
+      if (String(contaId).startsWith('temp')) {
         setTabelas(prevTabelas => prevTabelas.map(tabela => {
           if (tabela.id === tabelaId) {
             return {
@@ -481,7 +477,7 @@ const ContasChinesas = () => {
       for (const tabela of tabelas) {
         for (const conta of tabela.contas) {
           try {
-            if (conta.id > 1000000) { // Novos registros
+            if (String(conta.id).startsWith('temp')) { // Novos registros
               const response = await contasChinesesService.addConta({
                 telefone: conta.telefone,
                 pix: conta.pix,
@@ -493,6 +489,17 @@ const ContasChinesas = () => {
                 dominio: tabela.nome
               });
               console.log('Conta salva:', response);
+              
+              // Atualiza o ID temporário para o ID real do banco
+              const novoId = response.data.id;
+              setTabelas(prev =>
+                prev.map(t => ({
+                  ...t,
+                  contas: t.contas.map(c =>
+                    c.id === conta.id ? { ...c, id: novoId } : c
+                  )
+                }))
+              );
             } else {
               const response = await contasChinesesService.updateConta(conta.id, {
                 telefone: conta.telefone,
@@ -514,6 +521,7 @@ const ContasChinesas = () => {
       
       setFeedback('✓ Dados salvos com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
+      await loadData();
     } catch (error) {
       console.error('Erro ao salvar:', error);
       setFeedback('✗ Erro ao salvar dados');
