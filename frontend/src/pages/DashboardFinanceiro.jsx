@@ -14,7 +14,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
+import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon, Edit2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 
 const DashboardFinanceiro = () => {
@@ -25,8 +25,11 @@ const DashboardFinanceiro = () => {
   const [despesaNome, setDespesaNome] = useState('');
   const [dados, setDados] = useState([]);
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [editandoFaturamento, setEditandoFaturamento] = useState(false);
+  const [editandoGastoId, setEditandoGastoId] = useState(null);
+  const [edicaoValor, setEdicaoValor] = useState('');
+  const [edicaoNome, setEdicaoNome] = useState('');
 
-  // Verificar autenticação
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -35,7 +38,6 @@ const DashboardFinanceiro = () => {
     }
   }, [navigate]);
 
-  // Carregar dados do localStorage
   useEffect(() => {
     const dadosSalvos = localStorage.getItem('dashboardFinanceiro');
     if (dadosSalvos) {
@@ -45,7 +47,6 @@ const DashboardFinanceiro = () => {
         console.error('Erro ao carregar dados:', error);
       }
     } else {
-      // Adicionar dados de exemplo na primeira vez
       const dataAtual = new Date().toISOString().split('T')[0];
       const exemplos = [
         {
@@ -64,7 +65,6 @@ const DashboardFinanceiro = () => {
     }
   }, []);
 
-  // Salvar dados no localStorage
   useEffect(() => {
     localStorage.setItem('dashboardFinanceiro', JSON.stringify(dados));
   }, [dados]);
@@ -171,6 +171,80 @@ const DashboardFinanceiro = () => {
     mostrarFeedback('✅ Gasto removido!');
   };
 
+  // Editar faturamento
+  const handleEditarFaturamento = () => {
+    setEdicaoValor(dadosDiaAtual.faturamento.toString());
+    setEditandoFaturamento(true);
+  };
+
+  const handleSalvarEdicaoFaturamento = () => {
+    if (!edicaoValor || parseFloat(edicaoValor) <= 0) {
+      mostrarFeedback('⚠️ Digite um valor válido');
+      return;
+    }
+
+    setDados(prevDados => {
+      const novosDados = [...prevDados];
+      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
+
+      if (indexDia >= 0) {
+        novosDados[indexDia].faturamento = parseFloat(edicaoValor);
+      }
+
+      return novosDados;
+    });
+
+    setEditandoFaturamento(false);
+    setEdicaoValor('');
+    mostrarFeedback('✅ Faturamento atualizado!');
+  };
+
+  // Editar gasto
+  const handleEditarGasto = (gasto) => {
+    setEdicaoValor(gasto.valor.toString());
+    setEdicaoNome(gasto.nome);
+    setEditandoGastoId(gasto.id);
+  };
+
+  const handleSalvarEdicaoGasto = () => {
+    if (!edicaoValor || parseFloat(edicaoValor) <= 0) {
+      mostrarFeedback('⚠️ Digite um valor válido');
+      return;
+    }
+
+    if (!edicaoNome.trim()) {
+      mostrarFeedback('⚠️ Digite um nome válido');
+      return;
+    }
+
+    setDados(prevDados => {
+      const novosDados = [...prevDados];
+      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
+
+      if (indexDia >= 0) {
+        const gasto = novosDados[indexDia].gastos.find(g => g.id === editandoGastoId);
+        if (gasto) {
+          gasto.valor = parseFloat(edicaoValor);
+          gasto.nome = edicaoNome.trim();
+        }
+      }
+
+      return novosDados;
+    });
+
+    setEditandoGastoId(null);
+    setEdicaoValor('');
+    setEdicaoNome('');
+    mostrarFeedback('✅ Gasto atualizado!');
+  };
+
+  const handleCancelarEdicao = () => {
+    setEditandoFaturamento(false);
+    setEditandoGastoId(null);
+    setEdicaoValor('');
+    setEdicaoNome('');
+  };
+
   // Preparar dados para gráficos
   const prepararDadosGraficos = () => {
     return dados
@@ -219,7 +293,15 @@ const DashboardFinanceiro = () => {
                   R$ {(dadosDiaAtual.faturamento || 0).toFixed(2)}
                 </p>
               </div>
-              <DollarSign className="text-emerald-400" size={32} />
+              <div className="flex items-center gap-2">
+                <DollarSign className="text-emerald-400" size={32} />
+                <button
+                  onClick={handleEditarFaturamento}
+                  className="p-2 hover:bg-emerald-500/20 rounded-lg transition text-emerald-400 hover:text-emerald-300"
+                >
+                  <Edit2 size={20} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -359,10 +441,16 @@ const DashboardFinanceiro = () => {
                   <div className="flex-1">
                     <p className="text-gray-100 font-semibold">{gasto.nome}</p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
                     <span className="text-lg font-bold text-red-400">
                       -R$ {gasto.valor.toFixed(2)}
                     </span>
+                    <button
+                      onClick={() => handleEditarGasto(gasto)}
+                      className="p-2 hover:bg-blue-500/20 rounded-lg transition text-blue-400 hover:text-blue-300"
+                    >
+                      <Edit2 size={20} />
+                    </button>
                     <button
                       onClick={() => handleRemoverGasto(gasto.id)}
                       className="p-2 hover:bg-red-500/20 rounded-lg transition text-red-400 hover:text-red-300"
@@ -375,6 +463,63 @@ const DashboardFinanceiro = () => {
             </div>
           )}
         </div>
+
+        {/* Modal de Edição */}
+        {(editandoFaturamento || editandoGastoId) && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-zinc-900 rounded-lg p-6 max-w-sm w-full border border-zinc-700 shadow-lg">
+              <h3 className="text-lg font-bold text-gray-100 mb-4">
+                {editandoFaturamento ? 'Editar Faturamento' : 'Editar Gasto'}
+              </h3>
+
+              {editandoGastoId && (
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    Nome do Gasto
+                  </label>
+                  <input
+                    type="text"
+                    value={edicaoNome}
+                    onChange={(e) => setEdicaoNome(e.target.value)}
+                    className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              )}
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Valor
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-gray-500">R$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={edicaoValor}
+                    onChange={(e) => setEdicaoValor(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelarEdicao}
+                  className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-lg transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={editandoFaturamento ? handleSalvarEdicaoFaturamento : handleSalvarEdicaoGasto}
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
