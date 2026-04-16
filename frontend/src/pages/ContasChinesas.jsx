@@ -330,22 +330,43 @@ const ContasChinesas = () => {
       // Sincronizar todas as contas com a API
       for (const tabela of tabelas) {
         for (const conta of tabela.contas) {
-          if (conta.id > 1000000) { // Novos registros
-            await contasChinesesService.addConta({
-              ...conta,
-              dominio: tabela.nome
-            });
-          } else {
-            await contasChinesesService.updateConta(conta.id, {
-              ...conta,
-              dominio: tabela.nome
-            });
+          try {
+            if (conta.id > 1000000) { // Novos registros
+              const response = await contasChinesesService.addConta({
+                telefone: conta.telefone,
+                pix: conta.pix,
+                cpf: conta.cpf,
+                nome: conta.nome,
+                saldo: Number(conta.saldo) || 0,
+                status: conta.status,
+                tipo: conta.tipo,
+                dominio: tabela.nome
+              });
+              console.log('Conta salva:', response);
+            } else {
+              const response = await contasChinesesService.updateConta(conta.id, {
+                telefone: conta.telefone,
+                pix: conta.pix,
+                cpf: conta.cpf,
+                nome: conta.nome,
+                saldo: Number(conta.saldo) || 0,
+                status: conta.status,
+                tipo: conta.tipo,
+                dominio: tabela.nome
+              });
+              console.log('Conta atualizada:', response);
+            }
+          } catch (error) {
+            console.error('Erro ao salvar conta individual:', conta, error);
           }
         }
       }
       
       setFeedback('✓ Dados salvos com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
+      
+      // Recarrega os dados após salvar para sincronizar com o servidor
+      await loadData();
     } catch (error) {
       console.error('Erro ao salvar:', error);
       setFeedback('✗ Erro ao salvar dados');
@@ -353,7 +374,7 @@ const ContasChinesas = () => {
     } finally {
       setSaving(false);
     }
-  }, [tabelas]);
+  }, [tabelas, loadData]);
 
   const TabelaContas = ({ tabela }) => {
     const totals = calculateTotals(tabela.contas);
