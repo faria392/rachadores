@@ -105,10 +105,27 @@ async function initializeDatabase() {
       `);
       console.log('✓ Tabela revenue criada/verificada');
 
+      // Tabela de domínios/tabelas chinesas (mapeamento 1:N)
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS tabelas_chinesas (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          nome VARCHAR(100) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          UNIQUE KEY unique_user_nome (user_id, nome)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela tabelas_chinesas criada/verificada');
+
+      // Contas chinesas agora com tabela_id (FK para tabelas_chinesas)
       await poolConnection.execute(`
         CREATE TABLE IF NOT EXISTS contas_chinesas (
           id INT AUTO_INCREMENT PRIMARY KEY,
           user_id INT NOT NULL,
+          tabela_id INT,
           telefone VARCHAR(20),
           pix VARCHAR(100),
           cpf VARCHAR(14),
@@ -116,15 +133,41 @@ async function initializeDatabase() {
           saldo DECIMAL(12, 2) DEFAULT 0,
           status VARCHAR(20) DEFAULT 'Ativa',
           tipo VARCHAR(20) DEFAULT 'NOVA',
-          dominio VARCHAR(10) NOT NULL,
+          dominio VARCHAR(10),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-          INDEX idx_user_dominio (user_id, dominio),
-          INDEX idx_user_id (user_id)
+          FOREIGN KEY (tabela_id) REFERENCES tabelas_chinesas(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          INDEX idx_tabela_id (tabela_id),
+          INDEX idx_user_tabela (user_id, tabela_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
       `);
       console.log('✓ Tabela contas_chinesas criada/verificada');
+
+      // Adicionar coluna tabela_id se não existir (para compatibilidade com banco antigo)
+      try {
+        await poolConnection.execute(
+          `ALTER TABLE contas_chinesas ADD COLUMN tabela_id INT AFTER user_id`
+        );
+        console.log('✓ Coluna tabela_id adicionada');
+      } catch (error) {
+        if (error.message.includes('Duplicate')) {
+          console.log('ℹ Coluna tabela_id já existe');
+        }
+      }
+
+      // Adicionar FK para tabela_id se não existir
+      try {
+        await poolConnection.execute(
+          `ALTER TABLE contas_chinesas ADD FOREIGN KEY (tabela_id) REFERENCES tabelas_chinesas(id) ON DELETE CASCADE`
+        );
+        console.log('✓ Foreign key tabela_id adicionada');
+      } catch (error) {
+        if (error.message.includes('Duplicate')) {
+          console.log('ℹ Foreign key tabela_id já existe');
+        }
+      }
 
       await poolConnection.release();
       console.log('✅ Banco de dados inicializado com SUCESSO\n');

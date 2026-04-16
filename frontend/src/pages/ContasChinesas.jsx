@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Save, RefreshCw, DollarSign } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -208,17 +208,23 @@ const TabelaContas = React.memo(({ tabela, updateConta, deleteConta, deletarTabe
             </tr>
           </thead>
           <tbody>
-            {tabela.contas
-              .filter(conta => !conta.nome || !conta.nome.startsWith('[Tabela:'))
-              .map((conta) => (
-              <ContaRow 
-                key={conta.id} 
-                tabela={tabela} 
-                conta={conta} 
-                onUpdate={updateConta}
-                onDelete={deleteConta}
-              />
-            ))}
+            {tabela.contas.length === 0 ? (
+              <tr>
+                <td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+                  Nenhuma conta ainda. Clique em "Adicionar Conta" para começar.
+                </td>
+              </tr>
+            ) : (
+              tabela.contas.map((conta) => (
+                <ContaRow 
+                  key={conta.id} 
+                  tabela={tabela} 
+                  conta={conta} 
+                  onUpdate={updateConta}
+                  onDelete={deleteConta}
+                />
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -282,28 +288,11 @@ const ContasChinesas = () => {
     try {
       setLoading(true);
       const response = await contasChinesesService.getAll();
-      const contas = response.data || [];
+      const tabelasData = response.data || [];
 
-      console.log('📦 Dados recebidos da API:', contas);
-
-      const tabelasAgrupadas = {};
-      contas.forEach(conta => {
-        if (!tabelasAgrupadas[conta.dominio]) {
-          tabelasAgrupadas[conta.dominio] = {
-            id: conta.dominio,
-            nome: conta.dominio,
-            contas: []
-          };
-        }
-        
-        // Adiciona TODAS as contas, inclusive o registro da tabela
-        tabelasAgrupadas[conta.dominio].contas.push(conta);
-      });
-
-      const tabelasFinais = Object.values(tabelasAgrupadas);
-      console.log('✅ Tabelas carregadas:', tabelasFinais);
-      console.log('✅ Contagem de contas por tabela:', tabelasFinais.map(t => ({ nome: t.nome, contas: t.contas.length })));
-      setTabelas(tabelasFinais);
+      console.log('📦 Tabelas recebidas da API:', tabelasData);
+      
+      setTabelas(tabelasData);
     } catch (error) {
       console.error('❌ ERRO ao carregar dados da API:', error.response?.data || error.message || error);
       setTabelas([]);
@@ -327,31 +316,19 @@ const ContasChinesas = () => {
     }
 
     try {
-      // Salva a tabela no banco criando um registro inicial
-      const response = await contasChinesesService.addConta({
-        telefone: '',
-        pix: '',
-        cpf: '',
-        nome: `[Tabela: ${novaTabela.trim()}]`,
-        saldo: 0,
-        status: 'Ativa',
-        tipo: 'NOVA',
-        dominio: novaTabela.trim()
+      const response = await contasChinesesService.createTabela({
+        nome: novaTabela.trim()
       });
 
-      console.log('✅ Tabela criada no banco:', response);
+      console.log('✅ Tabela criada:', response);
 
       setNovaTabela('');
       setMostraFormulario(false);
-      setFeedback('✓ Tabela criada! Carregando...');
+      setFeedback('✓ Tabela criada com sucesso!');
       
-      // Aguarda um pouco para garantir que o banco processou
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Adicionar a nova tabela ao estado
+      setTabelas(prev => [...prev, response.data]);
       
-      // Recarrega os dados para sincronizar a tabela do banco
-      await loadData();
-      
-      setFeedback('✓ Tabela criada e carregada com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
     } catch (error) {
       console.error('❌ ERRO ao criar tabela:', error.response?.data || error.message || error);
@@ -362,31 +339,17 @@ const ContasChinesas = () => {
 
   const deletarTabela = useCallback(async (tabelaId) => {
     try {
-      // Encontra as contas dessa tabela
-      const tabela = tabelas.find(t => t.id === tabelaId);
+      await contasChinesesService.deleteTabela(tabelaId);
       
-      if (tabela) {
-        // Deleta o registro da tabela (aquele com nome "[Tabela: ...]")
-        const contasParaDeletar = tabela.contas.filter(c => c.nome && c.nome.startsWith('[Tabela:'));
-        
-        for (const conta of contasParaDeletar) {
-          try {
-            await contasChinesesService.deleteConta(conta.id);
-          } catch (error) {
-            console.error('Erro ao deletar registro da tabela:', error);
-          }
-        }
-      }
-
       setTabelas(prevTabelas => prevTabelas.filter(t => t.id !== tabelaId));
       setFeedback('✓ Tabela removida com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
     } catch (error) {
-      console.error('Erro ao deletar tabela:', error);
+      console.error('❌ Erro ao deletar tabela:', error);
       setFeedback('✗ Erro ao remover tabela');
       setTimeout(() => setFeedback(''), 3000);
     }
-  }, [tabelas]);
+  }, []);
 
   const updateConta = useCallback((tabelaId, contaId, field, value) => {
     setTabelas(prevTabelas => prevTabelas.map(tabela => {
@@ -415,7 +378,7 @@ const ContasChinesas = () => {
           saldo: 0,
           status: 'Ativa',
           tipo: 'NOVA',
-          dominio: tabela.nome
+          tabela_id: tabelaId
         };
         return {
           ...tabela,
@@ -464,14 +427,11 @@ const ContasChinesas = () => {
   }, []);
 
   const calculateTotals = (contas) => {
-    // Filtra contas fake (aquelas que começam com [Tabela:)
-    const contasReais = contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:'));
-    
     return {
-      totalSaldo: contasReais.reduce((sum, c) => sum + Number(c.saldo || 0), 0),
-      totalContas: contasReais.length,
-      contasAtivas: contasReais.filter(c => c.status === 'Ativa').length,
-      contasInativas: contasReais.filter(c => c.status === 'Inativa').length,
+      totalSaldo: contas.reduce((sum, c) => sum + Number(c.saldo || 0), 0),
+      totalContas: contas.length,
+      contasAtivas: contas.filter(c => c.status === 'Ativa').length,
+      contasInativas: contas.filter(c => c.status === 'Inativa').length,
     };
   };
 
@@ -501,9 +461,9 @@ const ContasChinesas = () => {
                 saldo: Number(conta.saldo) || 0,
                 status: conta.status,
                 tipo: conta.tipo,
-                dominio: tabela.nome
+                tabela_id: tabela.id
               });
-              console.log('Conta salva:', response);
+              console.log('✓ Conta salva:', response);
               
               // Atualiza o ID temporário para o ID real do banco
               const novoId = response.data.id;
@@ -515,18 +475,6 @@ const ContasChinesas = () => {
                   )
                 }))
               );
-            } else {
-              const response = await contasChinesesService.updateConta(conta.id, {
-                telefone: conta.telefone,
-                pix: conta.pix,
-                cpf: conta.cpf,
-                nome: conta.nome,
-                saldo: Number(conta.saldo) || 0,
-                status: conta.status,
-                tipo: conta.tipo,
-                dominio: tabela.nome
-              });
-              console.log('Conta atualizada:', response);
             }
           } catch (error) {
             console.error('❌ ERRO ao salvar conta:', conta.id, error.response?.data || error.message || error);
@@ -538,7 +486,7 @@ const ContasChinesas = () => {
       setTimeout(() => setFeedback(''), 3000);
       await loadData();
     } catch (error) {
-      console.error('Erro ao salvar:', error);
+      console.error('❌ Erro ao salvar:', error);
       setFeedback('✗ Erro ao salvar dados');
       setTimeout(() => setFeedback(''), 3000);
     } finally {
@@ -672,23 +620,23 @@ const ContasChinesas = () => {
                 <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total de Contas</div>
                   <div className="text-3xl font-bold text-gray-100 mt-2">
-                    {tabelas.reduce((sum, t) => sum + t.contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:')).length, 0)}
+                    {tabelas.reduce((sum, t) => sum + t.contas.length, 0)}
                   </div>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-yellow-500">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Total</div>
                   <div className={`text-3xl font-bold mt-2 ${
-                    tabelas.reduce((sum, t) => sum + t.contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:')).reduce((s, c) => s + Number(c.saldo || 0), 0), 0) < 0 
+                    tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0) < 0 
                       ? 'text-red-400' 
                       : 'text-gray-100'
                   }`}>
-                    {formatarMoeda(tabelas.reduce((sum, t) => sum + t.contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:')).reduce((s, c) => s + Number(c.saldo || 0), 0), 0))}
+                    {formatarMoeda(tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0))}
                   </div>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contas Ativas</div>
                   <div className="text-3xl font-bold text-green-400 mt-2">
-                    {tabelas.reduce((sum, t) => sum + t.contas.filter(c => (!c.nome || !c.nome.startsWith('[Tabela:')) && c.status === 'Ativa').length, 0)}
+                    {tabelas.reduce((sum, t) => sum + t.contas.filter(c => c.status === 'Ativa').length, 0)}
                   </div>
                 </div>
               </div>

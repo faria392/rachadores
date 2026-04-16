@@ -61,6 +61,12 @@ export const contasChinesesService = {
   getByDominio: (dominio) =>
     api.get(`/contas-chinesas/dominio/${dominio}`),
   
+  createTabela: (data) =>
+    api.post('/contas-chinesas/tabelas', data),
+  
+  deleteTabela: (id) =>
+    api.delete(`/contas-chinesas/tabelas/${id}`),
+  
   addConta: (data) =>
     api.post('/contas-chinesas', data),
   
