@@ -114,7 +114,7 @@ function DashboardFinanceiro() {
     }
 
     try {
-      await financialService.addRevenue(dataSelecionada, parseFloat(faturamentoDia));
+      await financialService.addRevenue(dataSelecionada, parseFloat(faturamentoDia), faturamentoNome || 'Faturamento');
       mostrarFeedback('✅ Faturamento salvo com sucesso!', 'success');
       setFaturamentoNome('');
       setFaturamentoDia('');
@@ -332,6 +332,46 @@ function DashboardFinanceiro() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* CONTAINER FATURAMENTO & GASTOS DO DIA */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* FATURAMENTO DO DIA */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+              <h3 className="text-lg font-bold text-white mb-4">Faturamento do Dia</h3>
+              {dados.faturamento > 0 ? (
+                <div>
+                  <p className="text-zinc-400 text-sm mb-2">Descrição</p>
+                  <p className="text-2xl font-bold text-green-400 mb-4">Faturamento</p>
+                  <p className="text-4xl font-bold text-green-400">
+                    R$ {dados.faturamento.toFixed(2)}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-zinc-400 text-center py-8">Nenhum faturamento registrado</p>
+              )}
+            </div>
+
+            {/* GASTOS DO DIA */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+              <h3 className="text-lg font-bold text-white mb-4">Gastos do Dia</h3>
+              {dados.gastos.length > 0 ? (
+                <div className="space-y-2">
+                  {dados.gastos.map((gasto) => (
+                    <div key={gasto.id} className="flex justify-between items-center bg-zinc-800 p-3 rounded-lg">
+                      <p className="text-white">{gasto.name}</p>
+                      <p className="text-red-400 font-semibold">R$ {parseFloat(gasto.amount).toFixed(2)}</p>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center bg-zinc-700 p-3 rounded-lg mt-3 border border-zinc-600">
+                    <p className="text-white font-bold">Total</p>
+                    <p className="text-red-400 font-bold">R$ {dados.totalGastos.toFixed(2)}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-zinc-400 text-center py-8">Nenhum gasto registrado</p>
+              )}
             </div>
           </div>
 

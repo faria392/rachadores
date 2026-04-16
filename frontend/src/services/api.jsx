@@ -129,8 +129,8 @@ export const financialService = {
   getDayData: (date) =>
     api.get(`/financeiro/day/${date}`),
   
-  addRevenue: (date, amount) =>
-    api.post('/financeiro/revenue', { date, amount }),
+  addRevenue: (date, amount, name) =>
+    api.post('/financeiro/revenue', { date, amount, name }),
   
   addExpense: (date, name, amount) =>
     api.post('/financeiro/expenses', { date, name, amount }),

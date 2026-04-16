@@ -12,7 +12,7 @@ router.get('/summary', verifyToken, async (req, res) => {
 
     // Pega faturamentos
     const [revenues] = await connection.execute(
-      'SELECT date, amount FROM revenue WHERE user_id = ? ORDER BY date DESC',
+      'SELECT date, amount, name FROM revenue WHERE user_id = ? ORDER BY date DESC',
       [req.userId]
     );
 
@@ -53,11 +53,12 @@ router.get('/day/:date', verifyToken, async (req, res) => {
 
     // Pega faturamento do dia
     const [revenueRows] = await connection.execute(
-      'SELECT amount FROM revenue WHERE user_id = ? AND date = ?',
+      'SELECT amount, name FROM revenue WHERE user_id = ? AND date = ?',
       [req.userId, date]
     );
 
     const faturamento = revenueRows.length > 0 ? revenueRows[0].amount : 0;
+    const faturamentoNome = revenueRows.length > 0 ? revenueRows[0].name : 'Faturamento';
 
     // Pega despesas do dia
     const [expenseRows] = await connection.execute(
@@ -74,6 +75,7 @@ router.get('/day/:date', verifyToken, async (req, res) => {
     res.json({
       date,
       faturamento: parseFloat(faturamento),
+      faturamentoNome,
       gastos: expenseRows,
       totalGastos,
       lucro,
@@ -90,7 +92,7 @@ router.get('/day/:date', verifyToken, async (req, res) => {
 router.post('/revenue', verifyToken, async (req, res) => {
   console.log('🔥 CHEGOU REQUISIÇÃO POST /financeiro/revenue', req.body);
   
-  const { date, amount } = req.body;
+  const { date, amount, name } = req.body;
 
   if (!date || amount === undefined) {
     return res.status(400).json({ error: 'Data e valor são obrigatórios' });
@@ -106,9 +108,9 @@ router.post('/revenue', verifyToken, async (req, res) => {
 
     // INSERT OR UPDATE
     await connection.execute(
-      `INSERT INTO revenue (user_id, amount, date) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE amount = VALUES(amount)`,
-      [req.userId, numAmount, date]
+      `INSERT INTO revenue (user_id, amount, date, name) VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE amount = VALUES(amount), name = VALUES(name)`,
+      [req.userId, numAmount, date, name || 'Faturamento']
     );
 
     connection.release();
@@ -117,6 +119,7 @@ router.post('/revenue', verifyToken, async (req, res) => {
       message: 'Faturamento salvo com sucesso',
       date,
       amount: numAmount,
+      name: name || 'Faturamento',
     });
   } catch (error) {
     console.error('Erro ao salvar faturamento:', error);
