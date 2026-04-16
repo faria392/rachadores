@@ -28,12 +28,10 @@ function Sidebar() {
     { path: '/profile', icon: User, label: 'Perfil' },
   ];
 
-  // Fechar menu ao mudar de rota
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
-  // Handle ESC key para fechar menu
   useEffect(() => {
     const handleEscKey = (e) => {
       if (e.key === 'Escape' && isMenuOpen) {
@@ -47,9 +45,7 @@ function Sidebar() {
     }
   }, [isMenuOpen]);
 
-  // Controlar overflow do body e fechar menu ao clicar fora (em telas mobile)
   useEffect(() => {
-    // Controlar body overflow
     if (window.innerWidth < 768 && isMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -60,8 +56,7 @@ function Sidebar() {
       if (window.innerWidth < 768 && isMenuOpen) {
         const sidebar = document.querySelector('[data-sidebar]');
         const toggleBtn = document.querySelector('[data-toggle-sidebar]');
-        
-        // Fechar apenas se clicou fora TANTO do sidebar quanto do botão
+
         if (
           sidebar &&
           toggleBtn &&
@@ -76,7 +71,6 @@ function Sidebar() {
     };
 
     if (isMenuOpen) {
-      // Usar capture phase para evitar conflicts
       document.addEventListener('click', handleClickOutside, true);
       return () => {
         document.removeEventListener('click', handleClickOutside, true);
@@ -100,7 +94,7 @@ function Sidebar() {
 
   return (
     <>
-      {/* Botão Hamburger - Visível apenas em mobile */}
+      {}
       <button
         type="button"
         data-toggle-sidebar
@@ -111,7 +105,7 @@ function Sidebar() {
         {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Overlay - Visível apenas em mobile quando menu está aberto */}
+      {}
       {isMenuOpen && (
         <div
           className="fixed inset-0 md:hidden bg-black/50 z-30"

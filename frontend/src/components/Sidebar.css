@@ -1,6 +1,3 @@
-/* Estilos responsivos para a Sidebar */
-
-/* Garantir que o botão hamburger é sempre clicável */
 button[data-toggle-sidebar] {
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
@@ -10,30 +7,26 @@ button[data-toggle-sidebar]:active {
   transform: scale(0.95);
 }
 
-/* Desktop - margin left automático */
 @media (min-width: 768px) {
   main[data-sidebar-layout] {
-    margin-left: 16rem; /* w-64 = 16rem */
+    margin-left: 16rem; 
   }
 }
 
-/* Mobile - sem margin left */
 @media (max-width: 767px) {
   main[data-sidebar-layout] {
     margin-left: 0;
-    margin-top: 2.5rem; /* Espaço para o botão hamburger */
+    margin-top: 2.5rem;
     padding-top: 0.5rem;
   }
 }
 
-/* Animações suaves para o menu hamburger */
 @media (max-width: 767px) {
   aside[data-sidebar] {
     will-change: transform;
   }
 }
 
-/* Overlay backdrop fade */
 .sidebar-overlay {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -47,12 +40,10 @@ button[data-toggle-sidebar]:active {
   }
 }
 
-/* Scroll body bloqueado quando menu está aberto em mobile */
 body.sidebar-open {
   overflow: hidden;
 }
 
-/* Garantir z-index correto */
 @media (max-width: 767px) {
   button[data-toggle-sidebar] {
     z-index: 40 !important;
