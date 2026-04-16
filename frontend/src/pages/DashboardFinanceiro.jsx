@@ -81,7 +81,7 @@ function DashboardFinanceiro() {
   const carregarDadosDia = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Requisição: GET /api/financial/day/' + dataSelecionada);
+      console.log('🔄 Requisição: GET /api/financeiro/day/' + dataSelecionada);
       const response = await financialService.getDayData(dataSelecionada);
       console.log('✅ Resposta recebida:', response.data);
       setDados({
@@ -108,7 +108,7 @@ function DashboardFinanceiro() {
 
   const carregarTodosDados = async () => {
     try {
-      console.log('🔄 Requisição: GET /api/financial/summary');
+      console.log('🔄 Requisição: GET /api/financeiro/summary');
       const response = await financialService.getSummary();
       console.log('✅ Resposta recebida:', response.data);
       
@@ -281,8 +281,8 @@ function DashboardFinanceiro() {
         <div className="max-w-6xl mx-auto p-6">
           {/* HEADER */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">💰 Dashboard Financeiro</h1>
-            <p className="text-zinc-400">Gerenie seu faturamento e despesas diárias</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Planilha</h1>
+            <p className="text-zinc-400">controla ai dog</p>
           </div>
 
           {/* FEEDBACK */}
@@ -300,7 +300,7 @@ function DashboardFinanceiro() {
 
           {/* DATA SELECTOR */}
           <div className="mb-8">
-            <label className="block text-white font-semibold mb-2">📅 Selecione a Data</label>
+            <label className="block text-white font-semibold mb-2">Selecione a Data</label>
             <input
               type="date"
               value={dataSelecionada}
@@ -320,7 +320,7 @@ function DashboardFinanceiro() {
                     R$ {dados.faturamento.toFixed(2)}
                   </p>
                 </div>
-                <div className="text-4xl">📊</div>
+                <div className="text-4xl"></div>
               </div>
             </div>
 
@@ -427,7 +427,7 @@ function DashboardFinanceiro() {
 
           {/* LISTA DE GASTOS */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-4">📋 Gastos do Dia</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Gastos do Dia</h2>
 
             {dados.gastos.length === 0 ? (
               <p className="text-zinc-400 text-center py-8">Nenhum gasto registrado neste dia</p>
@@ -470,7 +470,7 @@ function DashboardFinanceiro() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* GRÁFICO DE BARRAS */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-white mb-4">📊 Faturamento vs Gastos vs Lucro</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Faturamento vs Gastos vs Lucro</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dadosGraficos}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -495,7 +495,7 @@ function DashboardFinanceiro() {
 
             {/* GRÁFICO DE ÁREA */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-white mb-4">📈 Evolução do Lucro</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Evolução do Lucro</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={dadosGraficos}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -529,7 +529,7 @@ function DashboardFinanceiro() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">✏️ Editar Faturamento</h3>
+              <h3 className="text-xl font-bold text-white">Editar Faturamento</h3>
               <button
                 onClick={() => setModalEditFaturamento(false)}
                 className="text-zinc-400 hover:text-white"
@@ -569,7 +569,7 @@ function DashboardFinanceiro() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">✏️ Editar Gasto</h3>
+              <h3 className="text-xl font-bold text-white">Editar Gasto</h3>
               <button
                 onClick={() => setModalEditGasto(false)}
                 className="text-zinc-400 hover:text-white"

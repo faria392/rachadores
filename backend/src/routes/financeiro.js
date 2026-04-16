@@ -46,6 +46,7 @@ router.get('/summary', verifyToken, async (req, res) => {
 
 router.get('/day/:date', verifyToken, async (req, res) => {
   const { date } = req.params;
+  console.log('🔥 CHEGOU REQUISIÇÃO GET /financeiro/day/:date', { date, userId: req.userId });
 
   try {
     const connection = await pool.getConnection();
@@ -87,6 +88,8 @@ router.get('/day/:date', verifyToken, async (req, res) => {
 // POST /financeiro/revenue - Salvar faturamento
 // ============================================
 router.post('/revenue', verifyToken, async (req, res) => {
+  console.log('🔥 CHEGOU REQUISIÇÃO POST /financeiro/revenue', req.body);
+  
   const { date, amount } = req.body;
 
   if (!date || amount === undefined) {
@@ -125,6 +128,8 @@ router.post('/revenue', verifyToken, async (req, res) => {
 // POST /financeiro/expenses - Adicionar despesa
 // ============================================
 router.post('/expenses', verifyToken, async (req, res) => {
+  console.log('🔥 CHEGOU REQUISIÇÃO POST /financeiro/expenses', req.body);
+  
   const { date, name, amount } = req.body;
 
   if (!date || !name || amount === undefined) {
