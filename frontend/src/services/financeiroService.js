@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 class FinanceiroService {
   constructor() {
     this.api = axios.create({
-      baseURL: `${API_URL}/financeiro`,
+      baseURL: `${API_URL}/financial`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -27,7 +27,7 @@ class FinanceiroService {
    */
   async getDados() {
     try {
-      const response = await this.api.get('/');
+      const response = await this.api.get('/summary');
       return response.data;
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -43,7 +43,7 @@ class FinanceiroService {
    */
   async salvarFaturamento(data, faturamento) {
     try {
-      const response = await this.api.post('/faturamento', {
+      const response = await this.api.post('/revenue', {
         data,
         faturamento: parseFloat(faturamento),
       });
@@ -62,7 +62,7 @@ class FinanceiroService {
    */
   async editarFaturamento(data, faturamento) {
     try {
-      const response = await this.api.put(`/faturamento/${data}`, {
+      const response = await this.api.put(`/revenue/${data}`, {
         faturamento: parseFloat(faturamento),
       });
       return response.data;
@@ -81,7 +81,7 @@ class FinanceiroService {
    */
   async adicionarGasto(data, nome, valor) {
     try {
-      const response = await this.api.post('/gasto', {
+      const response = await this.api.post('/expenses', {
         data,
         nome,
         valor: parseFloat(valor),
@@ -102,7 +102,7 @@ class FinanceiroService {
    */
   async editarGasto(id, nome, valor) {
     try {
-      const response = await this.api.put(`/gasto/${id}`, {
+      const response = await this.api.put(`/expenses/${id}`, {
         nome,
         valor: parseFloat(valor),
       });
@@ -120,7 +120,7 @@ class FinanceiroService {
    */
   async deletarGasto(id) {
     try {
-      const response = await this.api.delete(`/gasto/${id}`);
+      const response = await this.api.delete(`/expenses/${id}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao deletar gasto:', error);
