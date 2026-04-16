@@ -5,6 +5,7 @@ const { pool, initializeDatabase } = require('./db');
 const authRoutes = require('./routes/auth');
 const revenueRoutes = require('./routes/revenue');
 const userRoutes = require('./routes/user');
+const contasChinesesRoutes = require('./routes/contasChinesas');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/revenue', revenueRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/contas-chinesas', contasChinesesRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });

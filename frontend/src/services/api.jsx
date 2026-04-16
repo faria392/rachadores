@@ -54,6 +54,26 @@ export const revenueService = {
     api.get('/revenue/ranking/daily'),
 };
 
+export const contasChinesesService = {
+  getAll: () =>
+    api.get('/contas-chinesas'),
+  
+  getByDominio: (dominio) =>
+    api.get(`/contas-chinesas/dominio/${dominio}`),
+  
+  addConta: (data) =>
+    api.post('/contas-chinesas', data),
+  
+  updateConta: (id, data) =>
+    api.put(`/contas-chinesas/${id}`, data),
+  
+  deleteConta: (id) =>
+    api.delete(`/contas-chinesas/${id}`),
+  
+  getResumo: () =>
+    api.get('/contas-chinesas/resumo/totais'),
+};
+
 export const userService = {
   updateProfile: (name, avatar) => {
     const formData = new FormData();

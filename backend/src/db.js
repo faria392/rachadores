@@ -105,6 +105,27 @@ async function initializeDatabase() {
       `);
       console.log('✓ Tabela revenue criada/verificada');
 
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS contas_chinesas (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          telefone VARCHAR(20),
+          pix VARCHAR(100),
+          cpf VARCHAR(14),
+          nome VARCHAR(100),
+          saldo DECIMAL(12, 2) DEFAULT 0,
+          status VARCHAR(20) DEFAULT 'Ativa',
+          tipo VARCHAR(20) DEFAULT 'NOVA',
+          dominio VARCHAR(10) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_user_dominio (user_id, dominio),
+          INDEX idx_user_id (user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela contas_chinesas criada/verificada');
+
       await poolConnection.release();
       console.log('✅ Banco de dados inicializado com SUCESSO\n');
       return; // Sucesso!

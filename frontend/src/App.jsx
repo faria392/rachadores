@@ -10,6 +10,7 @@ import History from './pages/History';
 import Achievements from './pages/Achievements';
 import Profile from './pages/Profile';
 import DashboardFinanceiro from './pages/DashboardFinanceiro';
+import ContasChinesas from './pages/ContasChinesas';
 import './App.css';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/financeiro" element={<DashboardFinanceiro />} />
+        <Route path="/contas-chinesas" element={<ContasChinesas />} />
 
         {/* Redirecionamento Padrão */}
         <Route path="/" element={<Navigate to="/login" />} />

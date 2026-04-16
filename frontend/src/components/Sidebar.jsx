@@ -23,6 +23,7 @@ function Sidebar() {
     { path: '/dashboard', icon: BarChart3, label: 'Dashboard' },
     { path: '/add-revenue', icon: PlusCircle, label: 'Adicionar Faturamento' },
     { path: '/financeiro', icon: DollarSign, label: 'Planilha' },
+    { path: '/contas-chinesas', icon: DollarSign, label: 'Contas Chinesas' },
     { path: '/ranking', icon: TrendingUp, label: 'Ranking Geral' },
     { path: '/ranking-daily', icon: Calendar, label: 'Ranking Diário' },
     { path: '/history', icon: History, label: 'Histórico' },
