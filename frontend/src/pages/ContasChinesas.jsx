@@ -282,6 +282,8 @@ const ContasChinesas = () => {
       const response = await contasChinesesService.getAll();
       const contas = response.data || [];
 
+      console.log('📦 Dados recebidos da API:', contas);
+
       const tabelasAgrupadas = {};
       contas.forEach(conta => {
         if (!tabelasAgrupadas[conta.dominio]) {
@@ -298,9 +300,11 @@ const ContasChinesas = () => {
         }
       });
 
-      setTabelas(Object.values(tabelasAgrupadas));
+      const tabelasFinais = Object.values(tabelasAgrupadas);
+      console.log('✅ Tabelas carregadas:', tabelasFinais);
+      setTabelas(tabelasFinais);
     } catch (error) {
-      console.error('Erro ao carregar dados da API:', error);
+      console.error('❌ ERRO ao carregar dados da API:', error.response?.data || error.message || error);
       setTabelas([]);
     } finally {
       setLoading(false);
@@ -323,7 +327,7 @@ const ContasChinesas = () => {
 
     try {
       // Salva a tabela no banco criando um registro inicial
-      await contasChinesesService.addConta({
+      const response = await contasChinesesService.addConta({
         telefone: '',
         pix: '',
         cpf: '',
@@ -334,17 +338,24 @@ const ContasChinesas = () => {
         dominio: novaTabela.trim()
       });
 
+      console.log('✅ Tabela criada no banco:', response);
+
       setNovaTabela('');
       setMostraFormulario(false);
-      setFeedback('✓ Tabela criada e salva com sucesso!');
-      setTimeout(() => setFeedback(''), 3000);
+      setFeedback('✓ Tabela criada! Carregando...');
+      
+      // Aguarda um pouco para garantir que o banco processou
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Recarrega os dados para sincronizar a tabela do banco
       await loadData();
-    } catch (error) {
-      console.error('Erro ao criar tabela:', error);
-      setFeedback('✗ Erro ao criar tabela');
+      
+      setFeedback('✓ Tabela criada e carregada com sucesso!');
       setTimeout(() => setFeedback(''), 3000);
+    } catch (error) {
+      console.error('❌ ERRO ao criar tabela:', error.response?.data || error.message || error);
+      setFeedback('✗ Erro ao criar tabela: ' + (error.response?.data?.error || error.message));
+      setTimeout(() => setFeedback(''), 5000);
     }
   }, [novaTabela, tabelas]);
 
