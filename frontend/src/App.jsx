@@ -9,6 +9,7 @@ import RankingDaily from './pages/RankingDaily';
 import History from './pages/History';
 import Achievements from './pages/Achievements';
 import Profile from './pages/Profile';
+import DashboardFinanceiro from './pages/DashboardFinanceiro';
 import './App.css';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
         <Route path="/history" element={<History />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/financeiro" element={<DashboardFinanceiro />} />
 
         {/* Redirecionamento Padrão */}
         <Route path="/" element={<Navigate to="/login" />} />
