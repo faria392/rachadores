@@ -4,19 +4,26 @@ export const formatDateBrasil = (dateStr) => {
   
   // Converter string YYYY-MM-DD para Date
   const [year, month, day] = dateStr.split('-');
-  const date = new Date(year, month - 1, day);
+  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   
-  // Formatar para timezone do Brasil
-  const options = {
-    timeZone: 'America/Sao_Paulo',
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    locale: 'pt-BR'
-  };
+  // Validar se a data é válida
+  if (isNaN(date.getTime())) return 'Data inválida';
   
-  return date.toLocaleDateString('pt-BR', options);
+  // Array dos dias da semana em português
+  const diasSemana = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+  
+  // Array dos meses em português
+  const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
+                 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  
+  // Obter o dia da semana
+  const diaSemana = diasSemana[date.getDay()];
+  
+  // Capitalizar primeira letra
+  const diaSemanaCapitalizado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+  
+  // Formatar como "Segunda, 15 de abril"
+  return `${diaSemanaCapitalizado}, ${parseInt(day)} de ${meses[date.getMonth()]}`;
 };
 
 // Formatar data e hora em hora de Brasília

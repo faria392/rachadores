@@ -36,7 +36,6 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
     setLoading(true);
 
     try {
-      // Normalizar a data antes de enviar
       const normalizedDate = normalizeDateToYYYYMMDD(date);
       
       if (isEditing) {

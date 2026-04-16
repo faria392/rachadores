@@ -214,7 +214,7 @@ function HistoryPage() {
                               }`}
                             >
                               <td className="px-4 py-3 text-gray-300 font-medium">
-                                {record.date}
+                                {record.date.split('-').reverse().join('/')}
                               </td>
                               <td className="px-4 py-3 text-gray-400">
                                 {formatDate(record.date)}
