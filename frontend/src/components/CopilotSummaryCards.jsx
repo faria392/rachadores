@@ -15,6 +15,14 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
     }).format(valor);
   };
 
+  // Obter nome do mês atual
+  const obterNomeMes = (dataString) => {
+    const data = new Date(dataString + 'T00:00:00');
+    return new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(data);
+  };
+
+  const nomeMes = obterNomeMes(dataSelecionada);
+
   // Helper functions
   const getDateRange = (startDate, endDate) => {
     const dates = [];
@@ -115,7 +123,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
 
           {/* Card 3: Lucro do Mês */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-            <p className="text-zinc-400 text-sm">Lucro do Mês</p>
+            <p className="text-zinc-400 text-sm">Lucro de {nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}</p>
             <p className={`text-3xl font-bold ${getProfitColor(lucroMes)}`}>
               {formatarMoeda(lucroMes)}
             </p>
@@ -145,7 +153,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
 
           {/* Card 6: Gastos do Mês */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-            <p className="text-zinc-400 text-sm">Gastos do Mês</p>
+            <p className="text-zinc-400 text-sm">Gastos de {nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}</p>
             <p className="text-3xl font-bold text-red-400">
               {formatarMoeda(gastosMes)}
             </p>
