@@ -6,106 +6,136 @@ import { contasChinesesService } from '../services/api';
 import '../pages/ContasChinesas.css';
 
 // Componente memoizado para cada linha da tabela
-const ContaRow = React.memo(
-  ({ tabela, conta, onUpdate, onDelete }) => {
-    return (
-      <tr className={Math.floor(conta.id) % 2 === 0 ? 'zebra-par' : 'zebra-impar'}>
-        <td className="celula-telefone">
-          <input
-            type="text"
-            value={conta.telefone}
-            onChange={(e) => onUpdate(tabela.id, conta.id, 'telefone', e.target.value)}
-            placeholder="11987654321"
-            autoComplete="off"
-          />
-        </td>
-        <td className="celula-editavel">
-          <input
-            type="text"
-            value={conta.pix}
-            onChange={(e) => onUpdate(tabela.id, conta.id, 'pix', e.target.value)}
-            placeholder="Digite a chave PIX"
-            className="input-pix"
-            autoComplete="off"
-          />
-        </td>
-        <td className="celula-cpf">
-          <input
-            type="text"
-            value={conta.cpf}
-            onChange={(e) => onUpdate(tabela.id, conta.id, 'cpf', e.target.value)}
-            placeholder="123.456.789-00"
-            autoComplete="off"
-          />
-        </td>
-        <td className="celula-nome">
-          <input
-            type="text"
-            value={conta.nome}
-            onChange={(e) => onUpdate(tabela.id, conta.id, 'nome', e.target.value)}
-            placeholder="Nome do cliente"
-            autoComplete="off"
-          />
-        </td>
-        <td className={`celula-saldo celula-editavel ${Number(conta.saldo) < 0 ? 'negativo' : ''}`}>
-          <input
-            type="number"
-            value={conta.saldo}
-            onChange={(e) => onUpdate(tabela.id, conta.id, 'saldo', Number(e.target.value))}
-            placeholder="0.00"
-            step="0.01"
-            className="input-saldo"
-            autoComplete="off"
-          />
-        </td>
-        <td className="celula-status">
-          <select
-            value={conta.status}
-            onChange={(e) => onUpdate(tabela.id, conta.id, 'status', e.target.value)}
-            className={`select-status ${conta.status === 'Ativa' ? 'ativa' : 'inativa'}`}
-          >
-            <option value="Ativa">Ativa</option>
-            <option value="Inativa">Inativa</option>
-          </select>
-        </td>
-        <td className="celula-tipo">
-          <select
-            value={conta.tipo}
-            onChange={(e) => onUpdate(tabela.id, conta.id, 'tipo', e.target.value)}
-          >
-            <option value="NOVA">NOVA</option>
-            <option value="ANTIGA">ANTIGA</option>
-            <option value="MÃE">MÃE</option>
-          </select>
-        </td>
-        <td className="celula-acoes">
-          <button
-            className="btn-delete"
-            onClick={() => onDelete(tabela.id, conta.id)}
-            title="Deletar conta"
-          >
-            <Trash2 size={16} />
-          </button>
-        </td>
-      </tr>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Retorna true se são iguais (não re-renderiza)
-    // Comparação customizada ignorando as funções
-    return (
-      prevProps.tabela.id === nextProps.tabela.id &&
-      prevProps.conta.id === nextProps.conta.id &&
-      prevProps.conta.telefone === nextProps.conta.telefone &&
-      prevProps.conta.pix === nextProps.conta.pix &&
-      prevProps.conta.cpf === nextProps.conta.cpf &&
-      prevProps.conta.nome === nextProps.conta.nome &&
-      prevProps.conta.saldo === nextProps.conta.saldo &&
-      prevProps.conta.status === nextProps.conta.status &&
-      prevProps.conta.tipo === nextProps.conta.tipo
-    );
-  }
-);
+const ContaRow = ({ tabela, conta, onUpdate, onDelete }) => {
+  const [localData, setLocalData] = useState({
+    telefone: conta.telefone,
+    pix: conta.pix,
+    cpf: conta.cpf,
+    nome: conta.nome,
+    saldo: conta.saldo,
+    status: conta.status,
+    tipo: conta.tipo,
+  });
+
+  // Sincroniza quando a conta muda de fora
+  useEffect(() => {
+    setLocalData({
+      telefone: conta.telefone,
+      pix: conta.pix,
+      cpf: conta.cpf,
+      nome: conta.nome,
+      saldo: conta.saldo,
+      status: conta.status,
+      tipo: conta.tipo,
+    });
+  }, [conta.id]); // Apenas quando o ID da conta muda
+
+  const handleBlur = (field) => {
+    if (localData[field] !== conta[field]) {
+      onUpdate(tabela.id, conta.id, field, localData[field]);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setLocalData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <tr className={Math.floor(conta.id) % 2 === 0 ? 'zebra-par' : 'zebra-impar'}>
+      <td className="celula-telefone">
+        <input
+          type="text"
+          value={localData.telefone}
+          onChange={(e) => handleChange('telefone', e.target.value)}
+          onBlur={() => handleBlur('telefone')}
+          placeholder="11987654321"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-editavel">
+        <input
+          type="text"
+          value={localData.pix}
+          onChange={(e) => handleChange('pix', e.target.value)}
+          onBlur={() => handleBlur('pix')}
+          placeholder="Digite a chave PIX"
+          className="input-pix"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-cpf">
+        <input
+          type="text"
+          value={localData.cpf}
+          onChange={(e) => handleChange('cpf', e.target.value)}
+          onBlur={() => handleBlur('cpf')}
+          placeholder="123.456.789-00"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-nome">
+        <input
+          type="text"
+          value={localData.nome}
+          onChange={(e) => handleChange('nome', e.target.value)}
+          onBlur={() => handleBlur('nome')}
+          placeholder="Nome do cliente"
+          autoComplete="off"
+        />
+      </td>
+      <td className={`celula-saldo celula-editavel ${Number(localData.saldo) < 0 ? 'negativo' : ''}`}>
+        <input
+          type="number"
+          value={localData.saldo}
+          onChange={(e) => handleChange('saldo', Number(e.target.value))}
+          onBlur={() => handleBlur('saldo')}
+          placeholder="0.00"
+          step="0.01"
+          className="input-saldo"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-status">
+        <select
+          value={localData.status}
+          onChange={(e) => {
+            handleChange('status', e.target.value);
+            onUpdate(tabela.id, conta.id, 'status', e.target.value);
+          }}
+          className={`select-status ${localData.status === 'Ativa' ? 'ativa' : 'inativa'}`}
+        >
+          <option value="Ativa">Ativa</option>
+          <option value="Inativa">Inativa</option>
+        </select>
+      </td>
+      <td className="celula-tipo">
+        <select
+          value={localData.tipo}
+          onChange={(e) => {
+            handleChange('tipo', e.target.value);
+            onUpdate(tabela.id, conta.id, 'tipo', e.target.value);
+          }}
+        >
+          <option value="NOVA">NOVA</option>
+          <option value="ANTIGA">ANTIGA</option>
+          <option value="MÃE">MÃE</option>
+        </select>
+      </td>
+      <td className="celula-acoes">
+        <button
+          className="btn-delete"
+          onClick={() => onDelete(tabela.id, conta.id)}
+          title="Deletar conta"
+        >
+          <Trash2 size={16} />
+        </button>
+      </td>
+    </tr>
+  );
+};
 
 const ContasChinesas = () => {
   const navigate = useNavigate();
