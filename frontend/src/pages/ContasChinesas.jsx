@@ -6,89 +6,106 @@ import { contasChinesesService } from '../services/api';
 import '../pages/ContasChinesas.css';
 
 // Componente memoizado para cada linha da tabela
-const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
-  return (
-    <tr className={Math.floor(conta.id) % 2 === 0 ? 'zebra-par' : 'zebra-impar'}>
-      <td className="celula-telefone">
-        <input
-          type="text"
-          value={conta.telefone}
-          onChange={(e) => onUpdate(tabela.id, conta.id, 'telefone', e.target.value)}
-          placeholder="11987654321"
-          autoComplete="off"
-        />
-      </td>
-      <td className="celula-editavel">
-        <input
-          type="text"
-          value={conta.pix}
-          onChange={(e) => onUpdate(tabela.id, conta.id, 'pix', e.target.value)}
-          placeholder="Digite a chave PIX"
-          className="input-pix"
-          autoComplete="off"
-        />
-      </td>
-      <td className="celula-cpf">
-        <input
-          type="text"
-          value={conta.cpf}
-          onChange={(e) => onUpdate(tabela.id, conta.id, 'cpf', e.target.value)}
-          placeholder="123.456.789-00"
-          autoComplete="off"
-        />
-      </td>
-      <td className="celula-nome">
-        <input
-          type="text"
-          value={conta.nome}
-          onChange={(e) => onUpdate(tabela.id, conta.id, 'nome', e.target.value)}
-          placeholder="Nome do cliente"
-          autoComplete="off"
-        />
-      </td>
-      <td className={`celula-saldo celula-editavel ${Number(conta.saldo) < 0 ? 'negativo' : ''}`}>
-        <input
-          type="number"
-          value={conta.saldo}
-          onChange={(e) => onUpdate(tabela.id, conta.id, 'saldo', Number(e.target.value))}
-          placeholder="0.00"
-          step="0.01"
-          className="input-saldo"
-          autoComplete="off"
-        />
-      </td>
-      <td className="celula-status">
-        <select
-          value={conta.status}
-          onChange={(e) => onUpdate(tabela.id, conta.id, 'status', e.target.value)}
-          className={`select-status ${conta.status === 'Ativa' ? 'ativa' : 'inativa'}`}
-        >
-          <option value="Ativa">Ativa</option>
-          <option value="Inativa">Inativa</option>
-        </select>
-      </td>
-      <td className="celula-tipo">
-        <select
-          value={conta.tipo}
-          onChange={(e) => onUpdate(tabela.id, conta.id, 'tipo', e.target.value)}
-        >
-          <option value="NOVA">NOVA</option>
-          <option value="ANTIGA">ANTIGA</option>
-          <option value="MÃE">MÃE</option>
-        </select>
-      </td>
-      <td className="celula-acoes">
-        <button
-          className="btn-delete"
-          onClick={() => onDelete(tabela.id, conta.id)}
-          title="Deletar conta"
-        >
-          <Trash2 size={16} />
-        </button>
-      </td>
-    </tr>
-  );
-});
+const ContaRow = React.memo(
+  ({ tabela, conta, onUpdate, onDelete }) => {
+    return (
+      <tr className={Math.floor(conta.id) % 2 === 0 ? 'zebra-par' : 'zebra-impar'}>
+        <td className="celula-telefone">
+          <input
+            type="text"
+            value={conta.telefone}
+            onChange={(e) => onUpdate(tabela.id, conta.id, 'telefone', e.target.value)}
+            placeholder="11987654321"
+            autoComplete="off"
+          />
+        </td>
+        <td className="celula-editavel">
+          <input
+            type="text"
+            value={conta.pix}
+            onChange={(e) => onUpdate(tabela.id, conta.id, 'pix', e.target.value)}
+            placeholder="Digite a chave PIX"
+            className="input-pix"
+            autoComplete="off"
+          />
+        </td>
+        <td className="celula-cpf">
+          <input
+            type="text"
+            value={conta.cpf}
+            onChange={(e) => onUpdate(tabela.id, conta.id, 'cpf', e.target.value)}
+            placeholder="123.456.789-00"
+            autoComplete="off"
+          />
+        </td>
+        <td className="celula-nome">
+          <input
+            type="text"
+            value={conta.nome}
+            onChange={(e) => onUpdate(tabela.id, conta.id, 'nome', e.target.value)}
+            placeholder="Nome do cliente"
+            autoComplete="off"
+          />
+        </td>
+        <td className={`celula-saldo celula-editavel ${Number(conta.saldo) < 0 ? 'negativo' : ''}`}>
+          <input
+            type="number"
+            value={conta.saldo}
+            onChange={(e) => onUpdate(tabela.id, conta.id, 'saldo', Number(e.target.value))}
+            placeholder="0.00"
+            step="0.01"
+            className="input-saldo"
+            autoComplete="off"
+          />
+        </td>
+        <td className="celula-status">
+          <select
+            value={conta.status}
+            onChange={(e) => onUpdate(tabela.id, conta.id, 'status', e.target.value)}
+            className={`select-status ${conta.status === 'Ativa' ? 'ativa' : 'inativa'}`}
+          >
+            <option value="Ativa">Ativa</option>
+            <option value="Inativa">Inativa</option>
+          </select>
+        </td>
+        <td className="celula-tipo">
+          <select
+            value={conta.tipo}
+            onChange={(e) => onUpdate(tabela.id, conta.id, 'tipo', e.target.value)}
+          >
+            <option value="NOVA">NOVA</option>
+            <option value="ANTIGA">ANTIGA</option>
+            <option value="MÃE">MÃE</option>
+          </select>
+        </td>
+        <td className="celula-acoes">
+          <button
+            className="btn-delete"
+            onClick={() => onDelete(tabela.id, conta.id)}
+            title="Deletar conta"
+          >
+            <Trash2 size={16} />
+          </button>
+        </td>
+      </tr>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Retorna true se são iguais (não re-renderiza)
+    // Comparação customizada ignorando as funções
+    return (
+      prevProps.tabela.id === nextProps.tabela.id &&
+      prevProps.conta.id === nextProps.conta.id &&
+      prevProps.conta.telefone === nextProps.conta.telefone &&
+      prevProps.conta.pix === nextProps.conta.pix &&
+      prevProps.conta.cpf === nextProps.conta.cpf &&
+      prevProps.conta.nome === nextProps.conta.nome &&
+      prevProps.conta.saldo === nextProps.conta.saldo &&
+      prevProps.conta.status === nextProps.conta.status &&
+      prevProps.conta.tipo === nextProps.conta.tipo
+    );
+  }
+);
 
 const ContasChinesas = () => {
   const navigate = useNavigate();
