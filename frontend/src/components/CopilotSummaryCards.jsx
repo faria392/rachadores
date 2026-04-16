@@ -5,7 +5,19 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
   const revenues = Array.isArray(todosOsDados?.revenues) ? todosOsDados.revenues : [];
   const expenses = Array.isArray(todosOsDados?.expenses) ? todosOsDados.expenses : [];
 
-  // Formatador de moeda brasileira com máscara
+  const normalizeDate = (date) => {
+    if (!date) return '';
+    try {
+      return new Date(date).toISOString().split('T')[0];
+    } catch {
+      return String(date).substring(0, 10);
+    }
+  };
+
+  console.log('🔍 REVENUES:', revenues);
+  console.log('🔍 EXPENSES:', expenses);
+  console.log('🔍 DATA SELECIONADA:', dataSelecionada);
+
   const formatarMoeda = (valor) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -15,7 +27,6 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
     }).format(valor);
   };
 
-  // Obter nome do mês atual
   const obterNomeMes = (dataString) => {
     const data = new Date(dataString + 'T00:00:00');
     return new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(data);
@@ -51,20 +62,26 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
 
   const sumByDateRange = (items, dates) => {
     return items
-      .filter((item) => dates.includes(item.date))
-      .reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+      .filter((item) => dates.includes(normalizeDate(item.date)))
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0);
   };
 
   const sumByMonth = (items, yearMonth) => {
     return items
-      .filter((item) => item.date.startsWith(yearMonth))
-      .reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+      .filter((item) => normalizeDate(item.date).startsWith(yearMonth))
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0);
   };
 
   // Calculate values for Row 1 (Lucro)
   const lucroDia = (() => {
-    const revDia = revenues.filter((r) => r.date === dataSelecionada).reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
-    const expDia = expenses.filter((e) => e.date === dataSelecionada).reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    const revDia = revenues
+      .filter((r) => normalizeDate(r.date) === dataSelecionada)
+      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+    const expDia = expenses
+      .filter((e) => normalizeDate(e.date) === dataSelecionada)
+      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
     return revDia - expDia;
   })();
 
@@ -82,10 +99,9 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
     return revMes - expMes;
   })();
 
-  // Calculate values for Row 2 (Gastos)
   const gastosDia = expenses
-    .filter((e) => e.date === dataSelecionada)
-    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    .filter((e) => normalizeDate(e.date) === dataSelecionada)
+    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   const gastosSemana = sumByDateRange(expenses, getLast7Days(dataSelecionada));
 
