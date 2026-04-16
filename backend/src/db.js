@@ -1,15 +1,11 @@
 const mysql = require('mysql2/promise');
 
-// ============================================
-// VALIDAÇÃO DE VARIÁVEIS DE AMBIENTE
-// ============================================
 console.log('\n📋 Carregando variáveis de ambiente...');
 console.log(`   DB_HOST: ${process.env.DB_HOST || 'NÃO DEFINIDO'}`);
 console.log(`   DB_USERNAME: ${process.env.DB_USERNAME || 'NÃO DEFINIDO'}`);
 console.log(`   DB_NAME: ${process.env.DB_NAME || 'NÃO DEFINIDO'}`);
 console.log(`   JWT_SECRET: ${process.env.JWT_SECRET ? '✓ Definido' : '❌ NÃO DEFINIDO'}\n`);
 
-// Defina como aviso, não erro fatal
 if (!process.env.DB_HOST || !process.env.DB_USERNAME || !process.env.DB_NAME) {
   console.warn('⚠️  Aviso: Variáveis do banco incompletas - usando valores padrão');
   console.warn('   Isso pode causar erro de conexão\n');
@@ -30,7 +26,6 @@ const pool = mysql.createPool({
 
 pool.on('error', (err) => {
   console.error('⚠️ Erro no pool de conexões:', err.message);
-  // Não faz process.exit() - deixa app continuar
 });
 
 
@@ -125,6 +120,37 @@ async function initializeDatabase() {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
       `);
       console.log('✓ Tabela contas_chinesas criada/verificada');
+
+      // Tabela para registros financeiros diários
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS registros_financeiros (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          data DATE NOT NULL,
+          faturamento DECIMAL(12, 2) DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE KEY unique_user_data (user_id, data),
+          INDEX idx_user_data (user_id, data)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela registros_financeiros criada/verificada');
+
+      // Tabela para gastos
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS gastos (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          registro_id INT NOT NULL,
+          nome VARCHAR(100) NOT NULL,
+          valor DECIMAL(12, 2) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (registro_id) REFERENCES registros_financeiros(id) ON DELETE CASCADE,
+          INDEX idx_registro_id (registro_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela gastos criada/verificada');
 
       await poolConnection.release();
       console.log('✅ Banco de dados inicializado com SUCESSO\n');

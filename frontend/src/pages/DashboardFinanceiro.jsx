@@ -14,8 +14,9 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon, Edit2 } from 'lucide-react';
+import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon, Edit2, Loader } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import financeiroService from '../services/financeiroService';
 
 const DashboardFinanceiro = () => {
   const navigate = useNavigate();
@@ -29,46 +30,41 @@ const DashboardFinanceiro = () => {
   const [editandoGastoId, setEditandoGastoId] = useState(null);
   const [edicaoValor, setEdicaoValor] = useState('');
   const [edicaoNome, setEdicaoNome] = useState('');
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
 
+  // Carregar dados do usuário
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
+
+    carregarDados();
   }, [navigate]);
 
-  useEffect(() => {
-    const dadosSalvos = localStorage.getItem('dashboardFinanceiro');
-    if (dadosSalvos) {
-      try {
-        setDados(JSON.parse(dadosSalvos));
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-      }
-    } else {
-      const dataAtual = new Date().toISOString().split('T')[0];
-      const exemplos = [
-        {
-          data: dataAtual,
-          faturamento: 1500,
-          gastos: [
-            { id: 1, nome: 'Sure', valor: 100 },
-            { id: 2, nome: 'Anúncio', valor: 250 },
-            { id: 3, nome: 'Fumo', valor: 75 },
-            { id: 4, nome: 'Combustível', valor: 120 },
-            { id: 5, nome: 'Uber', valor: 45 },
-          ],
-        },
-      ];
-      setDados(exemplos);
+  // Carregar dados financeiros
+  const carregarDados = async () => {
+    try {
+      setCarregando(true);
+      const dadosAPI = await financeiroService.getDados();
+      setDados(dadosAPI);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      mostrarFeedback('❌ Erro ao carregar dados');
+    } finally {
+      setCarregando(false);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    localStorage.setItem('dashboardFinanceiro', JSON.stringify(dados));
-  }, [dados]);
+  // Mostrar feedback temporário
+  const mostrarFeedback = (msg) => {
+    setFeedbackMsg(msg);
+    setTimeout(() => setFeedbackMsg(''), 3000);
+  };
 
+  // Buscar dados do dia atual
   const getDadosDia = () => {
     return dados.find(d => d.data === dataSelecionada) || {
       data: dataSelecionada,
@@ -81,42 +77,31 @@ const DashboardFinanceiro = () => {
   const totalGastos = dadosDiaAtual.gastos.reduce((acc, gasto) => acc + parseFloat(gasto.valor || 0), 0);
   const lucro = (dadosDiaAtual.faturamento || 0) - totalGastos;
 
-  // Mostrar feedback temporário
-  const mostrarFeedback = (msg) => {
-    setFeedbackMsg(msg);
-    setTimeout(() => setFeedbackMsg(''), 3000);
-  };
-
   // Salvar faturamento
-  const handleSalvarFaturamento = () => {
+  const handleSalvarFaturamento = async () => {
     if (!faturamentoDia || parseFloat(faturamentoDia) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido para faturamento');
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
-
-      if (indexDia >= 0) {
-        novosDados[indexDia].faturamento = parseFloat(faturamentoDia);
-      } else {
-        novosDados.push({
-          data: dataSelecionada,
-          faturamento: parseFloat(faturamentoDia),
-          gastos: [],
-        });
-      }
-
-      return novosDados;
-    });
-
-    setFaturamentoDia('');
-    mostrarFeedback('✅ Faturamento registrado com sucesso!');
+    try {
+      setSalvando(true);
+      await financeiroService.salvarFaturamento(dataSelecionada, faturamentoDia);
+      
+      // Recarregar dados
+      await carregarDados();
+      setFaturamentoDia('');
+      mostrarFeedback('✅ Faturamento registrado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar faturamento:', error);
+      mostrarFeedback('❌ Erro ao salvar faturamento');
+    } finally {
+      setSalvando(false);
+    }
   };
 
   // Adicionar gasto
-  const handleAdicionarGasto = () => {
+  const handleAdicionarGasto = async () => {
     if (!despesaValor || parseFloat(despesaValor) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido para gasto');
       return;
@@ -127,47 +112,38 @@ const DashboardFinanceiro = () => {
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      let indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
-
-      if (indexDia < 0) {
-        novosDados.push({
-          data: dataSelecionada,
-          faturamento: 0,
-          gastos: [],
-        });
-        indexDia = novosDados.length - 1;
-      }
-
-      novosDados[indexDia].gastos.push({
-        id: Date.now(),
-        valor: parseFloat(despesaValor),
-        nome: despesaNome.trim(),
-      });
-
-      return novosDados;
-    });
-
-    setDespesaValor('');
-    setDespesaNome('');
-    mostrarFeedback('✅ Gasto adicionado com sucesso!');
+    try {
+      setSalvando(true);
+      await financeiroService.adicionarGasto(dataSelecionada, despesaNome, despesaValor);
+      
+      // Recarregar dados
+      await carregarDados();
+      setDespesaValor('');
+      setDespesaNome('');
+      mostrarFeedback('✅ Gasto adicionado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao adicionar gasto:', error);
+      mostrarFeedback('❌ Erro ao adicionar gasto');
+    } finally {
+      setSalvando(false);
+    }
   };
 
   // Remover gasto
-  const handleRemoverGasto = (idGasto) => {
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
-
-      if (indexDia >= 0) {
-        novosDados[indexDia].gastos = novosDados[indexDia].gastos.filter(g => g.id !== idGasto);
-      }
-
-      return novosDados;
-    });
-
-    mostrarFeedback('✅ Gasto removido!');
+  const handleRemoverGasto = async (idGasto) => {
+    try {
+      setSalvando(true);
+      await financeiroService.deletarGasto(idGasto);
+      
+      // Recarregar dados
+      await carregarDados();
+      mostrarFeedback('✅ Gasto removido!');
+    } catch (error) {
+      console.error('Erro ao remover gasto:', error);
+      mostrarFeedback('❌ Erro ao remover gasto');
+    } finally {
+      setSalvando(false);
+    }
   };
 
   // Editar faturamento
@@ -176,26 +152,27 @@ const DashboardFinanceiro = () => {
     setEditandoFaturamento(true);
   };
 
-  const handleSalvarEdicaoFaturamento = () => {
+  const handleSalvarEdicaoFaturamento = async () => {
     if (!edicaoValor || parseFloat(edicaoValor) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido');
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
-
-      if (indexDia >= 0) {
-        novosDados[indexDia].faturamento = parseFloat(edicaoValor);
-      }
-
-      return novosDados;
-    });
-
-    setEditandoFaturamento(false);
-    setEdicaoValor('');
-    mostrarFeedback('✅ Faturamento atualizado!');
+    try {
+      setSalvando(true);
+      await financeiroService.editarFaturamento(dataSelecionada, edicaoValor);
+      
+      // Recarregar dados
+      await carregarDados();
+      setEditandoFaturamento(false);
+      setEdicaoValor('');
+      mostrarFeedback('✅ Faturamento atualizado!');
+    } catch (error) {
+      console.error('Erro ao editar faturamento:', error);
+      mostrarFeedback('❌ Erro ao editar faturamento');
+    } finally {
+      setSalvando(false);
+    }
   };
 
   // Editar gasto
@@ -205,7 +182,7 @@ const DashboardFinanceiro = () => {
     setEditandoGastoId(gasto.id);
   };
 
-  const handleSalvarEdicaoGasto = () => {
+  const handleSalvarEdicaoGasto = async () => {
     if (!edicaoValor || parseFloat(edicaoValor) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido');
       return;
@@ -216,25 +193,22 @@ const DashboardFinanceiro = () => {
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
-
-      if (indexDia >= 0) {
-        const gasto = novosDados[indexDia].gastos.find(g => g.id === editandoGastoId);
-        if (gasto) {
-          gasto.valor = parseFloat(edicaoValor);
-          gasto.nome = edicaoNome.trim();
-        }
-      }
-
-      return novosDados;
-    });
-
-    setEditandoGastoId(null);
-    setEdicaoValor('');
-    setEdicaoNome('');
-    mostrarFeedback('✅ Gasto atualizado!');
+    try {
+      setSalvando(true);
+      await financeiroService.editarGasto(editandoGastoId, edicaoNome, edicaoValor);
+      
+      // Recarregar dados
+      await carregarDados();
+      setEditandoGastoId(null);
+      setEdicaoValor('');
+      setEdicaoNome('');
+      mostrarFeedback('✅ Gasto atualizado!');
+    } catch (error) {
+      console.error('Erro ao editar gasto:', error);
+      mostrarFeedback('❌ Erro ao editar gasto');
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const handleCancelarEdicao = () => {
@@ -258,6 +232,17 @@ const DashboardFinanceiro = () => {
 
   const dadosGraficos = prepararDadosGraficos();
 
+  if (carregando) {
+    return (
+      <div className="flex min-h-screen bg-zinc-950 items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader className="animate-spin text-orange-500" size={40} />
+          <p className="text-gray-400">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-zinc-950">
       {/* Sidebar */}
@@ -275,10 +260,17 @@ const DashboardFinanceiro = () => {
             <p className="text-gray-400">Controla ai cachorro</p>
           </div>
 
-          {}
+          {/* Feedback Message */}
           {feedbackMsg && (
             <div className="mb-6 p-4 bg-orange-500/20 border border-orange-500 rounded-lg text-orange-300 animate-pulse">
               {feedbackMsg}
+            </div>
+          )}
+
+          {/* Loading Overlay */}
+          {salvando && (
+            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
+              <Loader className="animate-spin text-orange-500" size={40} />
             </div>
           )}
 
@@ -296,7 +288,8 @@ const DashboardFinanceiro = () => {
                 <DollarSign className="text-emerald-400" size={32} />
                 <button
                   onClick={handleEditarFaturamento}
-                  className="p-2 hover:bg-emerald-500/20 rounded-lg transition text-emerald-400 hover:text-emerald-300"
+                  disabled={salvando}
+                  className="p-2 hover:bg-emerald-500/20 rounded-lg transition text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
                 >
                   <Edit2 size={20} />
                 </button>
@@ -366,14 +359,16 @@ const DashboardFinanceiro = () => {
                       placeholder="0,00"
                       value={faturamentoDia}
                       onChange={(e) => setFaturamentoDia(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-500"
+                      disabled={salvando}
+                      className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-500 disabled:opacity-50"
                     />
                   </div>
                   <button
                     onClick={handleSalvarFaturamento}
-                    className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition duration-200 transform hover:scale-105"
+                    disabled={salvando || !faturamentoDia}
+                    className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Salvar
+                    {salvando ? <Loader size={20} className="animate-spin" /> : 'Salvar'}
                   </button>
                 </div>
               </div>
@@ -390,10 +385,11 @@ const DashboardFinanceiro = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex:Anúncio, Fumo..."
+                  placeholder="Ex: Anúncio, Fumo..."
                   value={despesaNome}
                   onChange={(e) => setDespesaNome(e.target.value)}
-                  className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
+                  disabled={salvando}
+                  className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500 disabled:opacity-50"
                 />
               </div>
 
@@ -410,16 +406,18 @@ const DashboardFinanceiro = () => {
                     placeholder="0,00"
                     value={despesaValor}
                     onChange={(e) => setDespesaValor(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
+                    disabled={salvando}
+                    className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500 disabled:opacity-50"
                   />
                 </div>
               </div>
 
               <button
                 onClick={handleAdicionarGasto}
-                className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200 transform hover:scale-105"
+                disabled={salvando || !despesaNome || !despesaValor}
+                className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Adicionar Gasto
+                {salvando ? <Loader size={20} className="animate-spin mx-auto" /> : 'Adicionar Gasto'}
               </button>
             </div>
           </div>
@@ -446,13 +444,15 @@ const DashboardFinanceiro = () => {
                     </span>
                     <button
                       onClick={() => handleEditarGasto(gasto)}
-                      className="p-2 hover:bg-blue-500/20 rounded-lg transition text-blue-400 hover:text-blue-300"
+                      disabled={salvando}
+                      className="p-2 hover:bg-blue-500/20 rounded-lg transition text-blue-400 hover:text-blue-300 disabled:opacity-50"
                     >
                       <Edit2 size={20} />
                     </button>
                     <button
                       onClick={() => handleRemoverGasto(gasto.id)}
-                      className="p-2 hover:bg-red-500/20 rounded-lg transition text-red-400 hover:text-red-300"
+                      disabled={salvando}
+                      className="p-2 hover:bg-red-500/20 rounded-lg transition text-red-400 hover:text-red-300 disabled:opacity-50"
                     >
                       <Trash2 size={20} />
                     </button>
@@ -480,7 +480,8 @@ const DashboardFinanceiro = () => {
                     type="text"
                     value={edicaoNome}
                     onChange={(e) => setEdicaoNome(e.target.value)}
-                    className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={salvando}
+                    className="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   />
                 </div>
               )}
@@ -497,7 +498,8 @@ const DashboardFinanceiro = () => {
                     step="0.01"
                     value={edicaoValor}
                     onChange={(e) => setEdicaoValor(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={salvando}
+                    className="w-full pl-10 pr-4 py-2 border border-zinc-700 bg-zinc-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -505,15 +507,17 @@ const DashboardFinanceiro = () => {
               <div className="flex gap-3">
                 <button
                   onClick={handleCancelarEdicao}
-                  className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-lg transition"
+                  disabled={salvando}
+                  className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-lg transition disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={editandoFaturamento ? handleSalvarEdicaoFaturamento : handleSalvarEdicaoGasto}
-                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+                  disabled={salvando}
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition disabled:opacity-50"
                 >
-                  Salvar
+                  {salvando ? <Loader size={20} className="animate-spin mx-auto" /> : 'Salvar'}
                 </button>
               </div>
             </div>
