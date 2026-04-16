@@ -137,10 +137,10 @@ router.post('/revenue', verifyToken, async (req, res) => {
         [amount, userId, date]
       );
     } else {
-      // Inserir novo
+      // Inserir novo (date já é string YYYY-MM-DD)
       await connection.execute(
         `INSERT INTO revenue (user_id, date, amount) VALUES (?, ?, ?)`,
-        [userId, new Date(date), amount]
+        [userId, date, amount]
       );
     }
 
@@ -169,7 +169,7 @@ router.post('/expenses', verifyToken, async (req, res) => {
 
     await connection.execute(
       `INSERT INTO expenses (user_id, date, name, amount) VALUES (?, ?, ?, ?)`,
-      [userId, new Date(date), name, amount]
+      [userId, date, name, amount]
     );
 
     const [result] = await connection.execute(

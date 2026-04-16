@@ -105,6 +105,24 @@ async function initializeDatabase() {
       `);
       console.log('✓ Tabela revenue criada/verificada');
 
+      // Tabela de despesas/gastos
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          amount DECIMAL(10, 2) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          date DATE NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          INDEX idx_date (date),
+          INDEX idx_user_date (user_id, date)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela expenses criada/verificada');
+
       // Tabela de domínios/tabelas chinesas (mapeamento 1:N)
       await poolConnection.execute(`
         CREATE TABLE IF NOT EXISTS tabelas_chinesas (
@@ -169,11 +187,7 @@ async function initializeDatabase() {
         }
       }
 
-      // ==========================================
-      // TABELAS PARA GERENCIAMENTO DE FATURAMENTO
-      // ==========================================
 
-      // Tabela de tabelas de usuários (grupos de contas)
       await poolConnection.execute(`
         CREATE TABLE IF NOT EXISTS user_tables (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -188,7 +202,6 @@ async function initializeDatabase() {
       `);
       console.log('✓ Tabela user_tables criada/verificada');
 
-      // Tabela de usuários dentro de cada tabela
       await poolConnection.execute(`
         CREATE TABLE IF NOT EXISTS table_users (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -226,12 +239,10 @@ async function initializeDatabase() {
     }
   }
 
-  // Chegou aqui = todas as tentativas falharam
   console.error(`\n❌ Falha ao conectar ao banco após 3 tentativas`);
   console.error(`   Último erro: ${lastError.message}\n`);
   console.warn('⚠️ O servidor vai INICIAR mesmo assim em modo FALLBACK\n');
-  
-  // NÃO throw - deixa a aplicação continuar
+
   throw lastError;
 }
 

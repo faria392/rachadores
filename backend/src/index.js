@@ -5,7 +5,6 @@ const { pool, initializeDatabase } = require('./db');
 const authRoutes = require('./routes/auth');
 const revenueRoutes = require('./routes/revenue');
 const userRoutes = require('./routes/user');
-const contasChinesesRoutes = require('./routes/contasChinesas');
 const tablesRoutes = require('./routes/tables');
 const financialRoutes = require('./routes/financial');
 
@@ -18,7 +17,6 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/revenue', revenueRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/contas-chinesas', contasChinesesRoutes);
 app.use('/api/tables', tablesRoutes);
 app.use('/api/financial', financialRoutes);
 
