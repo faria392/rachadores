@@ -38,6 +38,32 @@ const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
     conta.tipo
   ]);
 
+  const saveFieldToDatabase = async (field, value) => {
+    try {
+      // Se for um ID temporário, apenas atualiza localmente
+      if (conta.id > 1000000) {
+        onUpdate(tabela.id, conta.id, field, value);
+      } else {
+        // Envia imediatamente para o banco de dados
+        const updateData = {
+          telefone: field === 'telefone' ? value : conta.telefone,
+          pix: field === 'pix' ? value : conta.pix,
+          cpf: field === 'cpf' ? value : conta.cpf,
+          nome: field === 'nome' ? value : conta.nome,
+          saldo: field === 'saldo' ? (Number(value) || 0) : Number(conta.saldo) || 0,
+          status: field === 'status' ? value : conta.status,
+          tipo: field === 'tipo' ? value : conta.tipo,
+          dominio: tabela.nome
+        };
+
+        await contasChinesesService.updateConta(conta.id, updateData);
+        onUpdate(tabela.id, conta.id, field, value);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar campo no banco:', error);
+    }
+  };
+
   const handleBlur = (field) => {
     let finalValue = localData[field];
     
@@ -47,7 +73,7 @@ const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
     }
     
     if (finalValue !== conta[field]) {
-      onUpdate(tabela.id, conta.id, field, finalValue);
+      saveFieldToDatabase(field, finalValue);
     }
   };
 
@@ -116,7 +142,7 @@ const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
           value={localData.status}
           onChange={(e) => {
             handleChange('status', e.target.value);
-            onUpdate(tabela.id, conta.id, 'status', e.target.value);
+            saveFieldToDatabase('status', e.target.value);
           }}
           className={`select-status ${localData.status === 'Ativa' ? 'ativa' : 'inativa'}`}
         >
@@ -129,7 +155,7 @@ const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
           value={localData.tipo}
           onChange={(e) => {
             handleChange('tipo', e.target.value);
-            onUpdate(tabela.id, conta.id, 'tipo', e.target.value);
+            saveFieldToDatabase('tipo', e.target.value);
           }}
         >
           <option value="NOVA">NOVA</option>
