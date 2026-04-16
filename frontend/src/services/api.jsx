@@ -124,22 +124,22 @@ export const userService = {
 
 export const financialService = {
   getSummary: () =>
-    api.get('/financial/summary'),
+    api.get('/financeiro/summary'),
   
   getDayData: (date) =>
-    api.get(`/financial/day/${date}`),
+    api.get(`/financeiro/day/${date}`),
   
   addRevenue: (date, amount) =>
-    api.post('/financial/revenue', { date, amount }),
+    api.post('/financeiro/revenue', { date, amount }),
   
   addExpense: (date, name, amount) =>
-    api.post('/financial/expenses', { date, name, amount }),
+    api.post('/financeiro/expenses', { date, name, amount }),
   
   updateExpense: (id, name, amount) =>
-    api.put(`/financial/expenses/${id}`, { name, amount }),
+    api.put(`/financeiro/expenses/${id}`, { name, amount }),
   
   deleteExpense: (id) =>
-    api.delete(`/financial/expenses/${id}`),
+    api.delete(`/financeiro/expenses/${id}`),
 };
 
 export default api;
