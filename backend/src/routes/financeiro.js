@@ -3,97 +3,110 @@ const router = express.Router();
 const { pool } = require('../db');
 const { verifyToken } = require('../middleware/auth');
 
-// GET /api/financeiro - Retorna todos os dados financeiros do usuário
-router.get('/', verifyToken, async (req, res) => {
+// ============================================
+// GET /financeiro/summary - Resumo completo
+// ============================================
+router.get('/summary', verifyToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
 
-    // Buscar todos os registros financeiros do usuário
-    const [registros] = await connection.execute(`
-      SELECT 
-        rf.id,
-        rf.data,
-        rf.faturamento
-      FROM registros_financeiros rf
-      WHERE rf.user_id = ?
-      ORDER BY rf.data DESC
-    `, [req.userId]);
+    // Pega faturamentos
+    const [revenues] = await connection.execute(
+      'SELECT date, amount FROM revenue WHERE user_id = ? ORDER BY date DESC',
+      [req.userId]
+    );
 
-    // Para cada registro, buscar seus gastos
-    const dados = [];
-    for (const registro of registros) {
-      const [gastos] = await connection.execute(`
-        SELECT id, nome, valor
-        FROM gastos
-        WHERE registro_id = ?
-        ORDER BY created_at ASC
-      `, [registro.id]);
-
-      dados.push({
-        id: registro.id,
-        data: registro.data,
-        faturamento: parseFloat(registro.faturamento) || 0,
-        gastos: gastos.map(g => ({
-          id: g.id,
-          nome: g.nome,
-          valor: parseFloat(g.valor)
-        }))
-      });
-    }
-
-    connection.release();
-    res.json(dados);
-  } catch (error) {
-    console.error('Erro ao buscar dados financeiros:', error);
-    res.status(500).json({ error: 'Erro ao buscar dados' });
-  }
-});
-
-router.post('/faturamento', verifyToken, async (req, res) => {
-  const { data, faturamento } = req.body;
-
-  if (!data || faturamento === undefined) {
-    return res.status(400).json({ error: 'Data e faturamento são obrigatórios' });
-  }
-
-  try {
-    const connection = await pool.getConnection();
-
-    const [result] = await connection.execute(`
-      INSERT INTO registros_financeiros (user_id, data, faturamento)
-      VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE faturamento = ?
-    `, [req.userId, data, faturamento, faturamento]);
-
-    const [registros] = await connection.execute(`
-      SELECT id FROM registros_financeiros
-      WHERE user_id = ? AND data = ?
-    `, [req.userId, data]);
-
-    if (registros.length === 0) {
-      connection.release();
-      return res.status(500).json({ error: 'Erro ao salvar faturamento' });
-    }
-
-    const registroId = registros[0].id;
-
-    const [gastos] = await connection.execute(`
-      SELECT id, nome, valor
-      FROM gastos
-      WHERE registro_id = ?
-    `, [registroId]);
+    // Pega despesas
+    const [expenses] = await connection.execute(
+      'SELECT id, date, name, amount FROM expenses WHERE user_id = ? ORDER BY date DESC',
+      [req.userId]
+    );
 
     connection.release();
 
     res.json({
-      id: registroId,
-      data,
-      faturamento,
-      gastos: gastos.map(g => ({
-        id: g.id,
-        nome: g.nome,
-        valor: parseFloat(g.valor)
-      }))
+      revenues: revenues || [],
+      expenses: expenses || [],
+    });
+  } catch (error) {
+    console.error('Erro ao buscar resumo:', error);
+    res.status(500).json({ error: 'Erro ao buscar resumo financeiro' });
+  }
+});
+
+// ============================================
+// GET /financeiro/day/:date - Dados de um dia
+// ============================================
+router.get('/day/:date', verifyToken, async (req, res) => {
+  const { date } = req.params;
+
+  try {
+    const connection = await pool.getConnection();
+
+    // Pega faturamento do dia
+    const [revenueRows] = await connection.execute(
+      'SELECT amount FROM revenue WHERE user_id = ? AND date = ?',
+      [req.userId, date]
+    );
+
+    const faturamento = revenueRows.length > 0 ? revenueRows[0].amount : 0;
+
+    // Pega despesas do dia
+    const [expenseRows] = await connection.execute(
+      'SELECT id, name, amount FROM expenses WHERE user_id = ? AND date = ?',
+      [req.userId, date]
+    );
+
+    connection.release();
+
+    // Calcula totais
+    const totalGastos = expenseRows.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const lucro = parseFloat(faturamento) - totalGastos;
+
+    res.json({
+      date,
+      faturamento: parseFloat(faturamento),
+      gastos: expenseRows,
+      totalGastos,
+      lucro,
+    });
+  } catch (error) {
+    console.error('Erro ao buscar dados do dia:', error);
+    res.status(500).json({ error: 'Erro ao buscar dados do dia' });
+  }
+});
+
+// ============================================
+// POST /financeiro/revenue - Salvar faturamento
+// ============================================
+router.post('/revenue', verifyToken, async (req, res) => {
+  const { date, amount } = req.body;
+
+  if (!date || amount === undefined) {
+    return res.status(400).json({ error: 'Data e valor são obrigatórios' });
+  }
+
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount < 0) {
+    return res.status(400).json({ error: 'Valor deve ser um número positivo' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+
+    // INSERT OR UPDATE
+    await connection.execute(
+      `INSERT INTO revenue (user_id, amount, date) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE amount = VALUES(amount)`,
+      [req.userId, numAmount, date]
+    );
+
+    connection.release();
+
+    res.json({
+      message: 'Faturamento salvo com sucesso',
+      date,
+      amount: numAmount,
     });
   } catch (error) {
     console.error('Erro ao salvar faturamento:', error);
@@ -101,173 +114,126 @@ router.post('/faturamento', verifyToken, async (req, res) => {
   }
 });
 
-router.post('/gasto', verifyToken, async (req, res) => {
-  const { data, nome, valor } = req.body;
+// ============================================
+// POST /financeiro/expenses - Adicionar despesa
+// ============================================
+router.post('/expenses', verifyToken, async (req, res) => {
+  const { date, name, amount } = req.body;
 
-  if (!data || !nome || valor === undefined) {
+  if (!date || !name || amount === undefined) {
     return res.status(400).json({ error: 'Data, nome e valor são obrigatórios' });
   }
 
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount < 0) {
+    return res.status(400).json({ error: 'Valor deve ser um número positivo' });
+  }
+
   try {
     const connection = await pool.getConnection();
-    
-    const [result] = await connection.execute(`
-      INSERT INTO registros_financeiros (user_id, data, faturamento)
-      VALUES (?, ?, 0)
-      ON DUPLICATE KEY UPDATE id = id
-    `, [req.userId, data]);
 
-
-    const [registros] = await connection.execute(`
-      SELECT id FROM registros_financeiros
-      WHERE user_id = ? AND data = ?
-    `, [req.userId, data]);
-
-    if (registros.length === 0) {
-      connection.release();
-      return res.status(500).json({ error: 'Erro ao criar registro' });
-    }
-
-    const registroId = registros[0].id;
-
-    // Adicionar o gasto
-    const [gastoResult] = await connection.execute(`
-      INSERT INTO gastos (registro_id, nome, valor)
-      VALUES (?, ?, ?)
-    `, [registroId, nome, valor]);
+    const result = await connection.execute(
+      'INSERT INTO expenses (user_id, date, name, amount) VALUES (?, ?, ?, ?)',
+      [req.userId, date, name, numAmount]
+    );
 
     connection.release();
 
     res.json({
-      id: gastoResult.insertId,
-      nome,
-      valor: parseFloat(valor)
+      message: 'Despesa adicionada com sucesso',
+      id: result[0].insertId,
+      date,
+      name,
+      amount: numAmount,
     });
   } catch (error) {
-    console.error('Erro ao adicionar gasto:', error);
-    res.status(500).json({ error: 'Erro ao adicionar gasto' });
+    console.error('Erro ao adicionar despesa:', error);
+    res.status(500).json({ error: 'Erro ao adicionar despesa' });
   }
 });
 
-// PUT /api/financeiro/gasto/:id - Edita um gasto
-router.put('/gasto/:id', verifyToken, async (req, res) => {
-  const gastoId = req.params.id;
-  const { nome, valor } = req.body;
+// ============================================
+// PUT /financeiro/expenses/:id - Editar despesa
+// ============================================
+router.put('/expenses/:id', verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { name, amount } = req.body;
 
-  if (!nome || valor === undefined) {
+  if (!name || amount === undefined) {
     return res.status(400).json({ error: 'Nome e valor são obrigatórios' });
   }
 
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount < 0) {
+    return res.status(400).json({ error: 'Valor deve ser um número positivo' });
+  }
+
   try {
     const connection = await pool.getConnection();
 
-    // Verificar se o gasto pertence ao usuário
-    const [gastosVerify] = await connection.execute(`
-      SELECT g.id
-      FROM gastos g
-      JOIN registros_financeiros rf ON g.registro_id = rf.id
-      WHERE g.id = ? AND rf.user_id = ?
-    `, [gastoId, req.userId]);
+    // Verifica se a despesa pertence ao usuário
+    const [rows] = await connection.execute(
+      'SELECT id FROM expenses WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
 
-    if (gastosVerify.length === 0) {
+    if (rows.length === 0) {
       connection.release();
-      return res.status(403).json({ error: 'Gasto não encontrado' });
+      return res.status(404).json({ error: 'Despesa não encontrada' });
     }
 
-    // Atualizar o gasto
-    await connection.execute(`
-      UPDATE gastos
-      SET nome = ?, valor = ?
-      WHERE id = ?
-    `, [nome, valor, gastoId]);
+    // Atualiza
+    await connection.execute(
+      'UPDATE expenses SET name = ?, amount = ? WHERE id = ? AND user_id = ?',
+      [name, numAmount, id, req.userId]
+    );
 
     connection.release();
 
     res.json({
-      id: parseInt(gastoId),
-      nome,
-      valor: parseFloat(valor)
+      message: 'Despesa atualizada com sucesso',
+      id,
+      name,
+      amount: numAmount,
     });
   } catch (error) {
-    console.error('Erro ao editar gasto:', error);
-    res.status(500).json({ error: 'Erro ao editar gasto' });
+    console.error('Erro ao editar despesa:', error);
+    res.status(500).json({ error: 'Erro ao editar despesa' });
   }
 });
 
-// DELETE /api/financeiro/gasto/:id - Remove um gasto
-router.delete('/gasto/:id', verifyToken, async (req, res) => {
-  const gastoId = req.params.id;
+// ============================================
+// DELETE /financeiro/expenses/:id - Deletar despesa
+// ============================================
+router.delete('/expenses/:id', verifyToken, async (req, res) => {
+  const { id } = req.params;
 
   try {
     const connection = await pool.getConnection();
 
-    // Verificar se o gasto pertence ao usuário
-    const [gastosVerify] = await connection.execute(`
-      SELECT g.id
-      FROM gastos g
-      JOIN registros_financeiros rf ON g.registro_id = rf.id
-      WHERE g.id = ? AND rf.user_id = ?
-    `, [gastoId, req.userId]);
+    // Verifica se a despesa pertence ao usuário
+    const [rows] = await connection.execute(
+      'SELECT id FROM expenses WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
 
-    if (gastosVerify.length === 0) {
+    if (rows.length === 0) {
       connection.release();
-      return res.status(403).json({ error: 'Gasto não encontrado' });
+      return res.status(404).json({ error: 'Despesa não encontrada' });
     }
 
-    // Deletar o gasto
-    await connection.execute(`
-      DELETE FROM gastos
-      WHERE id = ?
-    `, [gastoId]);
+    // Deleta
+    await connection.execute(
+      'DELETE FROM expenses WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
 
     connection.release();
 
-    res.json({ success: true });
+    res.json({ message: 'Despesa deletada com sucesso' });
   } catch (error) {
-    console.error('Erro ao deletar gasto:', error);
-    res.status(500).json({ error: 'Erro ao deletar gasto' });
-  }
-});
-
-// PUT /api/financeiro/faturamento/:data - Edita faturamento de uma data específica
-router.put('/faturamento/:data', verifyToken, async (req, res) => {
-  const { data } = req.params;
-  const { faturamento } = req.body;
-
-  if (faturamento === undefined) {
-    return res.status(400).json({ error: 'Faturamento é obrigatório' });
-  }
-
-  try {
-    const connection = await pool.getConnection();
-
-    // Verificar se o registro pertence ao usuário
-    const [registrosVerify] = await connection.execute(`
-      SELECT id FROM registros_financeiros
-      WHERE user_id = ? AND data = ?
-    `, [req.userId, data]);
-
-    if (registrosVerify.length === 0) {
-      connection.release();
-      return res.status(403).json({ error: 'Registro não encontrado' });
-    }
-
-    // Atualizar o faturamento
-    await connection.execute(`
-      UPDATE registros_financeiros
-      SET faturamento = ?
-      WHERE user_id = ? AND data = ?
-    `, [faturamento, req.userId, data]);
-
-    connection.release();
-
-    res.json({
-      data,
-      faturamento: parseFloat(faturamento)
-    });
-  } catch (error) {
-    console.error('Erro ao editar faturamento:', error);
-    res.status(500).json({ error: 'Erro ao editar faturamento' });
+    console.error('Erro ao deletar despesa:', error);
+    res.status(500).json({ error: 'Erro ao deletar despesa' });
   }
 });
 

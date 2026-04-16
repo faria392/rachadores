@@ -18,7 +18,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/revenue', revenueRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/contas-chinesas', contasChinesesRoutes);
-app.use('/api/financeiro', financeiro);
+app.use('/api/financial', financeiro);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
