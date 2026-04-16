@@ -364,7 +364,7 @@ const ContasChinesas = () => {
           </div>
 
           {/* Tabelas lado a lado */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 gap-8 mb-8">
             <TabelaContas
               titulo="TABELA"
               dominio="69B.com"
