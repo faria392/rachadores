@@ -21,7 +21,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Rotas Protegidas - cada página valida seu próprio token */}
+        {}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/add-revenue" element={<AddRevenue />} />
         <Route path="/ranking" element={<Ranking />} />
