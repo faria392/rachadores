@@ -176,6 +176,87 @@ const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
   );
 });
 
+// Componente TabelaContas memoizado - FORA do ContasChinesas
+const TabelaContas = React.memo(({ tabela, updateConta, deleteConta, deletarTabela, addConta, calculateTotals, formatarMoeda }) => {
+  const totals = calculateTotals(tabela.contas);
+
+  return (
+    <div className="tabela-container">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="tabela-titulo">EDITAR {tabela.nome}</h2>
+        <button
+          className="btn-delete-tabela"
+          onClick={() => deletarTabela(tabela.id)}
+          title="Deletar tabela"
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
+      
+      <div className="tabela-wrapper">
+        <table className="tabela-contas">
+          <thead>
+            <tr>
+              <th>Telefone</th>
+              <th>Chave Pix</th>
+              <th>CPF</th>
+              <th>Nome</th>
+              <th>Saldo (R$)</th>
+              <th>Status</th>
+              <th>Tipo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tabela.contas.map((conta) => (
+              <ContaRow 
+                key={conta.id} 
+                tabela={tabela} 
+                conta={conta} 
+                onUpdate={updateConta}
+                onDelete={deleteConta}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Resumo e Totais */}
+      <div className="resumo-totais">
+        <div className="secao-resumo">
+          <h3>Totais:</h3>
+          <div className="linha-total">
+            <span className="label">Total Saldo:</span>
+            <span className={`valor ${totals.totalSaldo < 0 ? 'negativo' : ''}`}>
+              {formatarMoeda(totals.totalSaldo)}
+            </span>
+          </div>
+        </div>
+
+        <div className="secao-resumo">
+          <h3>Contas:</h3>
+          <div className="linha-total">
+            <span className="label">Cadastradas:</span>
+            <span className="valor">{totals.totalContas}</span>
+          </div>
+          <div className="linha-total">
+            <span className="label">Ativas:</span>
+            <span className="valor" style={{ color: '#22c55e' }}>{totals.contasAtivas}</span>
+          </div>
+          <div className="linha-total">
+            <span className="label">Inativas:</span>
+            <span className="valor" style={{ color: '#ef4444' }}>{totals.contasInativas}</span>
+          </div>
+        </div>
+
+        <button className="btn-add-conta" onClick={() => addConta(tabela.id)}>
+          <Plus size={18} /> Adicionar Conta
+        </button>
+      </div>
+    </div>
+  );
+});
+
 const ContasChinesas = () => {
   const navigate = useNavigate();
   const [tabelas, setTabelas] = useState([]);
@@ -442,86 +523,6 @@ const ContasChinesas = () => {
     }
   }, [tabelas]);
 
-  const TabelaContas = ({ tabela }) => {
-    const totals = calculateTotals(tabela.contas);
-
-    return (
-      <div className="tabela-container">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="tabela-titulo">EDITAR {tabela.nome}</h2>
-          <button
-            className="btn-delete-tabela"
-            onClick={() => deletarTabela(tabela.id)}
-            title="Deletar tabela"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
-        
-        <div className="tabela-wrapper">
-          <table className="tabela-contas">
-            <thead>
-              <tr>
-                <th>Telefone</th>
-                <th>Chave Pix</th>
-                <th>CPF</th>
-                <th>Nome</th>
-                <th>Saldo (R$)</th>
-                <th>Status</th>
-                <th>Tipo</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tabela.contas.map((conta) => (
-                <ContaRow 
-                  key={conta.id} 
-                  tabela={tabela} 
-                  conta={conta} 
-                  onUpdate={updateConta}
-                  onDelete={deleteConta}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Resumo e Totais */}
-        <div className="resumo-totais">
-          <div className="secao-resumo">
-            <h3>Totais:</h3>
-            <div className="linha-total">
-              <span className="label">Total Saldo:</span>
-              <span className={`valor ${totals.totalSaldo < 0 ? 'negativo' : ''}`}>
-                {formatarMoeda(totals.totalSaldo)}
-              </span>
-            </div>
-          </div>
-
-          <div className="secao-resumo">
-            <h3>Contas:</h3>
-            <div className="linha-total">
-              <span className="label">Cadastradas:</span>
-              <span className="valor">{totals.totalContas}</span>
-            </div>
-            <div className="linha-total">
-              <span className="label">Ativas:</span>
-              <span className="valor" style={{ color: '#22c55e' }}>{totals.contasAtivas}</span>
-            </div>
-            <div className="linha-total">
-              <span className="label">Inativas:</span>
-              <span className="valor" style={{ color: '#ef4444' }}>{totals.contasInativas}</span>
-            </div>
-          </div>
-
-          <button className="btn-add-conta" onClick={() => addConta(tabela.id)}>
-            <Plus size={18} /> Adicionar Conta
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="flex min-h-screen bg-zinc-950">
@@ -615,7 +616,16 @@ const ContasChinesas = () => {
           <div className="grid grid-cols-1 gap-8 mb-8">
             {tabelas.length > 0 ? (
               tabelas.map(tabela => (
-                <TabelaContas key={tabela.id} tabela={tabela} />
+                <TabelaContas
+                  key={tabela.id}
+                  tabela={tabela}
+                  updateConta={updateConta}
+                  deleteConta={deleteConta}
+                  deletarTabela={deletarTabela}
+                  addConta={addConta}
+                  calculateTotals={calculateTotals}
+                  formatarMoeda={formatarMoeda}
+                />
               ))
             ) : (
               <div className="text-center py-12 text-gray-400">
