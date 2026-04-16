@@ -83,8 +83,7 @@ function RevenueForm({ onRevenueAdded, initialData = null }) {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
-            disabled={isEditing}
-            className="input-field disabled:opacity-50 disabled:cursor-not-allowed"
+            className="input-field"
           />
         </div>
 
