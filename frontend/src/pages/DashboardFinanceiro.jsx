@@ -15,7 +15,6 @@ import {
 import { Trash2, Edit2, Plus, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { financialService } from '../services/api';
-import './Dashboard.css';
 
 function DashboardFinanceiro() {
   const navigate = useNavigate();
