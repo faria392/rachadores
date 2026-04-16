@@ -5,6 +5,16 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
   const revenues = Array.isArray(todosOsDados?.revenues) ? todosOsDados.revenues : [];
   const expenses = Array.isArray(todosOsDados?.expenses) ? todosOsDados.expenses : [];
 
+  // Formatador de moeda brasileira com máscara
+  const formatarMoeda = (valor) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(valor);
+  };
+
   // Helper functions
   const getDateRange = (startDate, endDate) => {
     const dates = [];
@@ -91,7 +101,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Lucro do Dia</p>
             <p className={`text-3xl font-bold ${getProfitColor(lucroDia)}`}>
-              R$ {lucroDia.toFixed(2)}
+              {formatarMoeda(lucroDia)}
             </p>
           </div>
 
@@ -99,7 +109,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Lucro da Semana</p>
             <p className={`text-3xl font-bold ${getProfitColor(lucroSemana)}`}>
-              R$ {lucroSemana.toFixed(2)}
+              {formatarMoeda(lucroSemana)}
             </p>
           </div>
 
@@ -107,7 +117,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Lucro do Mês</p>
             <p className={`text-3xl font-bold ${getProfitColor(lucroMes)}`}>
-              R$ {lucroMes.toFixed(2)}
+              {formatarMoeda(lucroMes)}
             </p>
           </div>
         </div>
@@ -121,7 +131,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Gastos do Dia</p>
             <p className="text-3xl font-bold text-red-400">
-              R$ {gastosDia.toFixed(2)}
+              {formatarMoeda(gastosDia)}
             </p>
           </div>
 
@@ -129,7 +139,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Gastos da Semana</p>
             <p className="text-3xl font-bold text-red-400">
-              R$ {gastosSemana.toFixed(2)}
+              {formatarMoeda(gastosSemana)}
             </p>
           </div>
 
@@ -137,7 +147,7 @@ function CopilotSummaryCards({ todosOsDados, dataSelecionada }) {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <p className="text-zinc-400 text-sm">Gastos do Mês</p>
             <p className="text-3xl font-bold text-red-400">
-              R$ {gastosMes.toFixed(2)}
+              {formatarMoeda(gastosMes)}
             </p>
           </div>
         </div>
