@@ -208,7 +208,9 @@ const TabelaContas = React.memo(({ tabela, updateConta, deleteConta, deletarTabe
             </tr>
           </thead>
           <tbody>
-            {tabela.contas.map((conta) => (
+            {tabela.contas
+              .filter(conta => !conta.nome || !conta.nome.startsWith('[Tabela:'))
+              .map((conta) => (
               <ContaRow 
                 key={conta.id} 
                 tabela={tabela} 
@@ -294,14 +296,13 @@ const ContasChinesas = () => {
           };
         }
         
-        // Filtra o registro da tabela (aquele com nome "[Tabela: ...]") - não mostra como conta
-        if (!conta.nome || !conta.nome.startsWith('[Tabela:')) {
-          tabelasAgrupadas[conta.dominio].contas.push(conta);
-        }
+        // Adiciona TODAS as contas, inclusive o registro da tabela
+        tabelasAgrupadas[conta.dominio].contas.push(conta);
       });
 
       const tabelasFinais = Object.values(tabelasAgrupadas);
       console.log('✅ Tabelas carregadas:', tabelasFinais);
+      console.log('✅ Contagem de contas por tabela:', tabelasFinais.map(t => ({ nome: t.nome, contas: t.contas.length })));
       setTabelas(tabelasFinais);
     } catch (error) {
       console.error('❌ ERRO ao carregar dados da API:', error.response?.data || error.message || error);
@@ -463,11 +464,14 @@ const ContasChinesas = () => {
   }, []);
 
   const calculateTotals = (contas) => {
+    // Filtra contas fake (aquelas que começam com [Tabela:)
+    const contasReais = contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:'));
+    
     return {
-      totalSaldo: contas.reduce((sum, c) => sum + Number(c.saldo || 0), 0),
-      totalContas: contas.length,
-      contasAtivas: contas.filter(c => c.status === 'Ativa').length,
-      contasInativas: contas.filter(c => c.status === 'Inativa').length,
+      totalSaldo: contasReais.reduce((sum, c) => sum + Number(c.saldo || 0), 0),
+      totalContas: contasReais.length,
+      contasAtivas: contasReais.filter(c => c.status === 'Ativa').length,
+      contasInativas: contasReais.filter(c => c.status === 'Inativa').length,
     };
   };
 
@@ -668,23 +672,23 @@ const ContasChinesas = () => {
                 <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total de Contas</div>
                   <div className="text-3xl font-bold text-gray-100 mt-2">
-                    {tabelas.reduce((sum, t) => sum + t.contas.length, 0)}
+                    {tabelas.reduce((sum, t) => sum + t.contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:')).length, 0)}
                   </div>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-yellow-500">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Total</div>
                   <div className={`text-3xl font-bold mt-2 ${
-                    tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0) < 0 
+                    tabelas.reduce((sum, t) => sum + t.contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:')).reduce((s, c) => s + Number(c.saldo || 0), 0), 0) < 0 
                       ? 'text-red-400' 
                       : 'text-gray-100'
                   }`}>
-                    {formatarMoeda(tabelas.reduce((sum, t) => sum + t.contas.reduce((s, c) => s + Number(c.saldo || 0), 0), 0))}
+                    {formatarMoeda(tabelas.reduce((sum, t) => sum + t.contas.filter(c => !c.nome || !c.nome.startsWith('[Tabela:')).reduce((s, c) => s + Number(c.saldo || 0), 0), 0))}
                   </div>
                 </div>
                 <div className="bg-zinc-800 rounded-lg p-4 border-l-4 border-green-500">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contas Ativas</div>
                   <div className="text-3xl font-bold text-green-400 mt-2">
-                    {tabelas.reduce((sum, t) => sum + t.contas.filter(c => c.status === 'Ativa').length, 0)}
+                    {tabelas.reduce((sum, t) => sum + t.contas.filter(c => (!c.nome || !c.nome.startsWith('[Tabela:')) && c.status === 'Ativa').length, 0)}
                   </div>
                 </div>
               </div>
