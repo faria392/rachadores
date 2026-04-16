@@ -1,13 +1,17 @@
 import axios from 'axios';
 
-// Em desenvolvimento: usa proxy do Vite (/api)
-// Em produção (Hostinger): usa mesmo domínio (/api)
+// Em desenvolvimento: usa proxy do Vite (/api) que redireciona para localhost:5000
+// Em produção: usa VITE_API_URL (deve apontar para o backend real)
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+console.log('🔗 API URL configurada:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000, // 10 segundos de timeout
 });
 
+// Interceptor de requisição - adiciona token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -15,6 +19,20 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Interceptor de resposta - trata erros globais
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('❌ Token inválido ou expirado');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   register: (name, email, password) =>

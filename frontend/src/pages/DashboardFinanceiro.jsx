@@ -51,14 +51,26 @@ const DashboardFinanceiro = () => {
         setDados(response.data);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        mostrarFeedback('❌ Erro ao carregar dados do servidor');
+        
+        // Verificar tipo de erro
+        if (error.response?.status === 401) {
+          mostrarFeedback('❌ Token expirado. Faça login novamente');
+          setTimeout(() => navigate('/login'), 2000);
+        } else if (error.response?.status === 403) {
+          mostrarFeedback('❌ Acesso negado. Token inválido');
+          setTimeout(() => navigate('/login'), 2000);
+        } else if (error.code === 'ERR_NETWORK' || !error.response) {
+          mostrarFeedback('❌ Servidor indisponível. Verifique sua conexão');
+        } else {
+          mostrarFeedback('❌ Erro ao carregar dados do servidor');
+        }
       } finally {
         setCarregando(false);
       }
     };
 
     fetchDados();
-  }, []);
+  }, [navigate]);
 
   const getDadosDia = () => {
     return dados.find(d => d.data === dataSelecionada) || {
@@ -231,7 +243,6 @@ const DashboardFinanceiro = () => {
     setEditandoGastoId(gasto.id);
   };
 
-  // Salvar edição de gasto via API
   const handleSalvarEdicaoGasto = async () => {
     if (!edicaoValor || parseFloat(edicaoValor) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido');
@@ -282,7 +293,6 @@ const DashboardFinanceiro = () => {
     setEdicaoNome('');
   };
 
-  // Preparar dados para gráficos
   const prepararDadosGraficos = () => {
     return dados
       .sort((a, b) => new Date(a.data) - new Date(b.data))
