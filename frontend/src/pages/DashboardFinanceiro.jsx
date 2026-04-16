@@ -14,14 +14,12 @@ import {
 } from 'recharts';
 import { Trash2, Edit2, Plus, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import CopilotSummaryCards from '../components/CopilotSummaryCards';
 import { financialService } from '../services/api';
 
 function DashboardFinanceiro() {
   const navigate = useNavigate();
 
-  // ============================================
-  // ESTADOS
-  // ============================================
   const [dataSelecionada, setDataSelecionada] = useState(
     new Date().toISOString().split('T')[0]
   );
@@ -50,11 +48,7 @@ function DashboardFinanceiro() {
   const [modalEditGasto, setModalEditGasto] = useState(false);
   const [gastoEmEdicao, setGastoEmEdicao] = useState(null);
 
-  // ============================================
-  // EFEITOS
-  // ============================================
 
-  // Verifica autenticação
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -62,21 +56,15 @@ function DashboardFinanceiro() {
     }
   }, [navigate]);
 
-  // Carrega dados do dia - com logging
   useEffect(() => {
     console.log('📅 Carregando dados para a data:', dataSelecionada);
     carregarDadosDia();
   }, [dataSelecionada]);
 
-  // Carrega todos os dados para gráficos - apenas uma vez
   useEffect(() => {
     console.log('📊 Carregando dados totais para gráficos');
     carregarTodosDados();
   }, []);
-
-  // ============================================
-  // FUNÇÕES DE API
-  // ============================================
 
   const carregarDadosDia = async () => {
     try {
@@ -94,7 +82,6 @@ function DashboardFinanceiro() {
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error.response?.data || error.message);
       mostrarFeedback('❌ Erro ao carregar dados: ' + (error.response?.data?.error || error.message), 'error');
-      // Define dados vazios para não ficar congelado
       setDados({
         faturamento: 0,
         gastos: [],
@@ -208,10 +195,6 @@ function DashboardFinanceiro() {
       mostrarFeedback('Erro ao editar gasto', 'error');
     }
   };
-
-  // ============================================
-  // FUNÇÕES AUXILIARES
-  // ============================================
 
   const mostrarFeedback = (msg, tipo) => {
     setFeedback(msg);
@@ -333,7 +316,6 @@ function DashboardFinanceiro() {
                     R$ {dados.totalGastos.toFixed(2)}
                   </p>
                 </div>
-                <div className="text-4xl">💸</div>
               </div>
             </div>
 
@@ -350,7 +332,6 @@ function DashboardFinanceiro() {
                     R$ {dados.lucro.toFixed(2)}
                   </p>
                 </div>
-                <div className="text-4xl">{dados.lucro >= 0 ? '📈' : '📉'}</div>
               </div>
             </div>
           </div>
@@ -360,7 +341,7 @@ function DashboardFinanceiro() {
             {/* FATURAMENTO */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                📊 Registrar Faturamento
+                Registrar Faturamento
               </h2>
 
               <div className="space-y-4">
@@ -377,7 +358,7 @@ function DashboardFinanceiro() {
                   onClick={salvarFaturamento}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition duration-200"
                 >
-                  ✅ Salvar Faturamento
+                  Salvar Faturamento
                 </button>
 
                 {faturamentoDia && (
@@ -394,7 +375,7 @@ function DashboardFinanceiro() {
             {/* ADICIONAR GASTO */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                ➕ Adicionar Gasto
+                 Adicionar Gasto
               </h2>
 
               <div className="space-y-4">
@@ -521,6 +502,9 @@ function DashboardFinanceiro() {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* CARDS DE RESUMO - COPILOT SECTION */}
+          <CopilotSummaryCards todosOsDados={todosOsDados} dataSelecionada={dataSelecionada} />
         </div>
       </div>
 
