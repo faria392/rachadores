@@ -11,8 +11,7 @@ const verifyToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.id;
-    
-    // Validar se o usuário ainda existe no banco
+
     try {
       const connection = await pool.getConnection();
       const [user] = await connection.execute(
