@@ -102,7 +102,8 @@ const ContasChinesas = () => {
   const addConta = (tabelaId) => {
     setTabelas(tabelas.map(tabela => {
       if (tabela.id === tabelaId) {
-        const newId = Date.now() + Math.random() * 1000000;
+        // Garante que o ID é um inteiro único para evitar problemas com React Keys
+        const newId = Math.floor(Date.now() * 1000 + Math.random() * 1000000);
         const novaConta = {
           id: newId,
           telefone: '',
@@ -241,6 +242,7 @@ const ContasChinesas = () => {
                       value={conta.telefone}
                       onChange={(e) => updateConta(tabela.id, conta.id, 'telefone', e.target.value)}
                       placeholder="11987654321"
+                      autoComplete="off"
                     />
                   </td>
                   <td className="celula-editavel">
@@ -250,6 +252,7 @@ const ContasChinesas = () => {
                       onChange={(e) => updateConta(tabela.id, conta.id, 'pix', e.target.value)}
                       placeholder="Digite a chave PIX"
                       className="input-pix"
+                      autoComplete="off"
                     />
                   </td>
                   <td className="celula-cpf">
@@ -258,6 +261,7 @@ const ContasChinesas = () => {
                       value={conta.cpf}
                       onChange={(e) => updateConta(tabela.id, conta.id, 'cpf', e.target.value)}
                       placeholder="123.456.789-00"
+                      autoComplete="off"
                     />
                   </td>
                   <td className="celula-nome">
@@ -266,6 +270,7 @@ const ContasChinesas = () => {
                       value={conta.nome}
                       onChange={(e) => updateConta(tabela.id, conta.id, 'nome', e.target.value)}
                       placeholder="Nome do cliente"
+                      autoComplete="off"
                     />
                   </td>
                   <td className={`celula-saldo celula-editavel ${Number(conta.saldo) < 0 ? 'negativo' : ''}`}>
@@ -276,6 +281,7 @@ const ContasChinesas = () => {
                       placeholder="0.00"
                       step="0.01"
                       className="input-saldo"
+                      autoComplete="off"
                     />
                   </td>
                   <td className="celula-status">
