@@ -1,9 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Save, RefreshCw, DollarSign } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { contasChinesesService } from '../services/api';
 import '../pages/ContasChinesas.css';
+
+// Componente memoizado para cada linha da tabela
+const ContaRow = React.memo(({ tabela, conta, onUpdate, onDelete }) => {
+  return (
+    <tr className={Math.floor(conta.id) % 2 === 0 ? 'zebra-par' : 'zebra-impar'}>
+      <td className="celula-telefone">
+        <input
+          type="text"
+          value={conta.telefone}
+          onChange={(e) => onUpdate(tabela.id, conta.id, 'telefone', e.target.value)}
+          placeholder="11987654321"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-editavel">
+        <input
+          type="text"
+          value={conta.pix}
+          onChange={(e) => onUpdate(tabela.id, conta.id, 'pix', e.target.value)}
+          placeholder="Digite a chave PIX"
+          className="input-pix"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-cpf">
+        <input
+          type="text"
+          value={conta.cpf}
+          onChange={(e) => onUpdate(tabela.id, conta.id, 'cpf', e.target.value)}
+          placeholder="123.456.789-00"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-nome">
+        <input
+          type="text"
+          value={conta.nome}
+          onChange={(e) => onUpdate(tabela.id, conta.id, 'nome', e.target.value)}
+          placeholder="Nome do cliente"
+          autoComplete="off"
+        />
+      </td>
+      <td className={`celula-saldo celula-editavel ${Number(conta.saldo) < 0 ? 'negativo' : ''}`}>
+        <input
+          type="number"
+          value={conta.saldo}
+          onChange={(e) => onUpdate(tabela.id, conta.id, 'saldo', Number(e.target.value))}
+          placeholder="0.00"
+          step="0.01"
+          className="input-saldo"
+          autoComplete="off"
+        />
+      </td>
+      <td className="celula-status">
+        <select
+          value={conta.status}
+          onChange={(e) => onUpdate(tabela.id, conta.id, 'status', e.target.value)}
+          className={`select-status ${conta.status === 'Ativa' ? 'ativa' : 'inativa'}`}
+        >
+          <option value="Ativa">Ativa</option>
+          <option value="Inativa">Inativa</option>
+        </select>
+      </td>
+      <td className="celula-tipo">
+        <select
+          value={conta.tipo}
+          onChange={(e) => onUpdate(tabela.id, conta.id, 'tipo', e.target.value)}
+        >
+          <option value="NOVA">NOVA</option>
+          <option value="ANTIGA">ANTIGA</option>
+          <option value="MÃE">MÃE</option>
+        </select>
+      </td>
+      <td className="celula-acoes">
+        <button
+          className="btn-delete"
+          onClick={() => onDelete(tabela.id, conta.id)}
+          title="Deletar conta"
+        >
+          <Trash2 size={16} />
+        </button>
+      </td>
+    </tr>
+  );
+});
 
 const ContasChinesas = () => {
   const navigate = useNavigate();
@@ -24,7 +109,7 @@ const ContasChinesas = () => {
     loadData();
   }, [navigate]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await contasChinesesService.getAll();
@@ -50,9 +135,9 @@ const ContasChinesas = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const adicionarNovaTabela = () => {
+  const adicionarNovaTabela = useCallback(() => {
     if (!novaTabela.trim()) {
       setFeedback('⚠️ Digite um nome para a tabela');
       setTimeout(() => setFeedback(''), 3000);
@@ -72,21 +157,21 @@ const ContasChinesas = () => {
       contas: []
     };
 
-    setTabelas([...tabelas, novaTab]);
+    setTabelas(prevTabelas => [...prevTabelas, novaTab]);
     setNovaTabela('');
     setMostraFormulario(false);
     setFeedback('✓ Tabela criada com sucesso!');
     setTimeout(() => setFeedback(''), 3000);
-  };
+  }, [novaTabela, tabelas]);
 
-  const deletarTabela = (tabelaId) => {
-    setTabelas(tabelas.filter(t => t.id !== tabelaId));
+  const deletarTabela = useCallback((tabelaId) => {
+    setTabelas(prevTabelas => prevTabelas.filter(t => t.id !== tabelaId));
     setFeedback('✓ Tabela removida com sucesso!');
     setTimeout(() => setFeedback(''), 3000);
-  };
+  }, []);
 
-  const updateConta = (tabelaId, contaId, field, value) => {
-    setTabelas(tabelas.map(tabela => {
+  const updateConta = useCallback((tabelaId, contaId, field, value) => {
+    setTabelas(prevTabelas => prevTabelas.map(tabela => {
       if (tabela.id === tabelaId) {
         return {
           ...tabela,
@@ -97,12 +182,11 @@ const ContasChinesas = () => {
       }
       return tabela;
     }));
-  };
+  }, []);
 
-  const addConta = (tabelaId) => {
-    setTabelas(tabelas.map(tabela => {
+  const addConta = useCallback((tabelaId) => {
+    setTabelas(prevTabelas => prevTabelas.map(tabela => {
       if (tabela.id === tabelaId) {
-        // Garante que o ID é um inteiro único para evitar problemas com React Keys
         const newId = Math.floor(Date.now() * 1000 + Math.random() * 1000000);
         const novaConta = {
           id: newId,
@@ -122,13 +206,13 @@ const ContasChinesas = () => {
       }
       return tabela;
     }));
-  };
+  }, []);
 
-  const deleteConta = async (tabelaId, contaId) => {
+  const deleteConta = useCallback(async (tabelaId, contaId) => {
     try {
       // Se for um ID temporário, apenas remove localmente
       if (contaId > 1000000) {
-        setTabelas(tabelas.map(tabela => {
+        setTabelas(prevTabelas => prevTabelas.map(tabela => {
           if (tabela.id === tabelaId) {
             return {
               ...tabela,
@@ -141,7 +225,7 @@ const ContasChinesas = () => {
         // Deleta da API
         await contasChinesesService.deleteConta(contaId);
         
-        setTabelas(tabelas.map(tabela => {
+        setTabelas(prevTabelas => prevTabelas.map(tabela => {
           if (tabela.id === tabelaId) {
             return {
               ...tabela,
@@ -159,7 +243,7 @@ const ContasChinesas = () => {
       setFeedback('✗ Erro ao remover conta');
       setTimeout(() => setFeedback(''), 3000);
     }
-  };
+  }, []);
 
   const calculateTotals = (contas) => {
     return {
@@ -170,7 +254,7 @@ const ContasChinesas = () => {
     };
   };
 
-  const saveData = async () => {
+  const saveData = useCallback(async () => {
     try {
       setSaving(true);
       
@@ -201,7 +285,7 @@ const ContasChinesas = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [tabelas]);
 
   const TabelaContas = ({ tabela }) => {
     const totals = calculateTotals(tabela.contas);
@@ -234,85 +318,14 @@ const ContasChinesas = () => {
               </tr>
             </thead>
             <tbody>
-              {tabela.contas.map((conta, idx) => (
-                <tr key={conta.id} className={idx % 2 === 0 ? 'zebra-par' : 'zebra-impar'}>
-                  <td className="celula-telefone">
-                    <input
-                      type="text"
-                      value={conta.telefone}
-                      onChange={(e) => updateConta(tabela.id, conta.id, 'telefone', e.target.value)}
-                      placeholder="11987654321"
-                      autoComplete="off"
-                    />
-                  </td>
-                  <td className="celula-editavel">
-                    <input
-                      type="text"
-                      value={conta.pix}
-                      onChange={(e) => updateConta(tabela.id, conta.id, 'pix', e.target.value)}
-                      placeholder="Digite a chave PIX"
-                      className="input-pix"
-                      autoComplete="off"
-                    />
-                  </td>
-                  <td className="celula-cpf">
-                    <input
-                      type="text"
-                      value={conta.cpf}
-                      onChange={(e) => updateConta(tabela.id, conta.id, 'cpf', e.target.value)}
-                      placeholder="123.456.789-00"
-                      autoComplete="off"
-                    />
-                  </td>
-                  <td className="celula-nome">
-                    <input
-                      type="text"
-                      value={conta.nome}
-                      onChange={(e) => updateConta(tabela.id, conta.id, 'nome', e.target.value)}
-                      placeholder="Nome do cliente"
-                      autoComplete="off"
-                    />
-                  </td>
-                  <td className={`celula-saldo celula-editavel ${Number(conta.saldo) < 0 ? 'negativo' : ''}`}>
-                    <input
-                      type="number"
-                      value={conta.saldo}
-                      onChange={(e) => updateConta(tabela.id, conta.id, 'saldo', Number(e.target.value))}
-                      placeholder="0.00"
-                      step="0.01"
-                      className="input-saldo"
-                      autoComplete="off"
-                    />
-                  </td>
-                  <td className="celula-status">
-                    <select
-                      value={conta.status}
-                      onChange={(e) => updateConta(tabela.id, conta.id, 'status', e.target.value)}
-                      className={`select-status ${conta.status === 'Ativa' ? 'ativa' : 'inativa'}`}
-                    >
-                      <option value="Ativa">Ativa</option>
-                      <option value="Inativa">Inativa</option>
-                    </select>
-                  </td>
-                  <td className="celula-tipo">
-                    <select
-                      value={conta.tipo}
-                      onChange={(e) => updateConta(tabela.id, conta.id, 'tipo', e.target.value)}
-                    >
-                      <option value="NOVA">NOVA</option>
-                      <option value="ANTIGA">ANTIGA</option>
-                    </select>
-                  </td>
-                  <td className="celula-acoes">
-                    <button
-                      className="btn-delete"
-                      onClick={() => deleteConta(tabela.id, conta.id)}
-                      title="Deletar conta"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
+              {tabela.contas.map((conta) => (
+                <ContaRow 
+                  key={conta.id} 
+                  tabela={tabela} 
+                  conta={conta} 
+                  onUpdate={updateConta}
+                  onDelete={deleteConta}
+                />
               ))}
             </tbody>
           </table>
