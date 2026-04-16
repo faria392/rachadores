@@ -169,6 +169,47 @@ async function initializeDatabase() {
         }
       }
 
+      // ==========================================
+      // TABELAS PARA GERENCIAMENTO DE FATURAMENTO
+      // ==========================================
+
+      // Tabela de tabelas de usuários (grupos de contas)
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS user_tables (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          table_name VARCHAR(100) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_user_id (user_id),
+          UNIQUE KEY unique_user_table (user_id, table_name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela user_tables criada/verificada');
+
+      // Tabela de usuários dentro de cada tabela
+      await poolConnection.execute(`
+        CREATE TABLE IF NOT EXISTS table_users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          table_id INT NOT NULL,
+          phone VARCHAR(20) NOT NULL,
+          pix_key VARCHAR(255),
+          cpf VARCHAR(14),
+          name VARCHAR(100) NOT NULL,
+          balance DECIMAL(15, 2) DEFAULT 0,
+          status VARCHAR(20) DEFAULT 'ativa',
+          account_type VARCHAR(20) DEFAULT 'normal',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (table_id) REFERENCES user_tables(id) ON DELETE CASCADE,
+          INDEX idx_table_id (table_id),
+          INDEX idx_status (status),
+          INDEX idx_account_type (account_type)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      console.log('✓ Tabela table_users criada/verificada');
+
       await poolConnection.release();
       console.log('✅ Banco de dados inicializado com SUCESSO\n');
       return; // Sucesso!

@@ -19,6 +19,8 @@ import Sidebar from '../components/Sidebar';
 
 const DashboardFinanceiro = () => {
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
   const [faturamentoDia, setFaturamentoDia] = useState('');
   const [despesaValor, setDespesaValor] = useState('');
@@ -29,7 +31,9 @@ const DashboardFinanceiro = () => {
   const [editandoGastoId, setEditandoGastoId] = useState(null);
   const [edicaoValor, setEdicaoValor] = useState('');
   const [edicaoNome, setEdicaoNome] = useState('');
+  const [carregando, setCarregando] = useState(true);
 
+  // Verificar autenticação
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -38,36 +42,35 @@ const DashboardFinanceiro = () => {
     }
   }, [navigate]);
 
+  // Buscar dados da API
   useEffect(() => {
-    const dadosSalvos = localStorage.getItem('dashboardFinanceiro');
-    if (dadosSalvos) {
+    const fetchDados = async () => {
       try {
-        setDados(JSON.parse(dadosSalvos));
+        setCarregando(true);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/financial/summary`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao buscar dados');
+        }
+
+        const dados = await response.json();
+        setDados(dados);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
+        mostrarFeedback('❌ Erro ao carregar dados do servidor');
+      } finally {
+        setCarregando(false);
       }
-    } else {
-      const dataAtual = new Date().toISOString().split('T')[0];
-      const exemplos = [
-        {
-          data: dataAtual,
-          faturamento: 1500,
-          gastos: [
-            { id: 1, nome: 'Sure', valor: 100 },
-            { id: 2, nome: 'Anúncio', valor: 250 },
-            { id: 3, nome: 'Fumo', valor: 75 },
-            { id: 4, nome: 'Combustível', valor: 120 },
-            { id: 5, nome: 'Uber', valor: 45 },
-          ],
-        },
-      ];
-      setDados(exemplos);
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    localStorage.setItem('dashboardFinanceiro', JSON.stringify(dados));
-  }, [dados]);
+    fetchDados();
+  }, []);
 
   const getDadosDia = () => {
     return dados.find(d => d.data === dataSelecionada) || {
@@ -87,36 +90,59 @@ const DashboardFinanceiro = () => {
     setTimeout(() => setFeedbackMsg(''), 3000);
   };
 
-  // Salvar faturamento
-  const handleSalvarFaturamento = () => {
+  // Salvar faturamento via API
+  const handleSalvarFaturamento = async () => {
     if (!faturamentoDia || parseFloat(faturamentoDia) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido para faturamento');
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/financial/revenue`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: dataSelecionada,
+          amount: parseFloat(faturamentoDia),
+        }),
+      });
 
-      if (indexDia >= 0) {
-        novosDados[indexDia].faturamento = parseFloat(faturamentoDia);
-      } else {
-        novosDados.push({
-          data: dataSelecionada,
-          faturamento: parseFloat(faturamentoDia),
-          gastos: [],
-        });
+      if (!response.ok) {
+        throw new Error('Erro ao salvar faturamento');
       }
 
-      return novosDados;
-    });
+      // Atualizar dados localmente
+      setDados(prevDados => {
+        const novosDados = [...prevDados];
+        const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
 
-    setFaturamentoDia('');
-    mostrarFeedback('✅ Faturamento registrado com sucesso!');
+        if (indexDia >= 0) {
+          novosDados[indexDia].faturamento = parseFloat(faturamentoDia);
+        } else {
+          novosDados.push({
+            data: dataSelecionada,
+            faturamento: parseFloat(faturamentoDia),
+            gastos: [],
+          });
+        }
+
+        return novosDados.sort((a, b) => new Date(b.data) - new Date(a.data));
+      });
+
+      setFaturamentoDia('');
+      mostrarFeedback('✅ Faturamento registrado com sucesso!');
+    } catch (error) {
+      console.error('Erro:', error);
+      mostrarFeedback('❌ Erro ao salvar faturamento');
+    }
   };
 
-  // Adicionar gasto
-  const handleAdicionarGasto = () => {
+  // Adicionar gasto via API
+  const handleAdicionarGasto = async () => {
     if (!despesaValor || parseFloat(despesaValor) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido para gasto');
       return;
@@ -127,47 +153,91 @@ const DashboardFinanceiro = () => {
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      let indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
-
-      if (indexDia < 0) {
-        novosDados.push({
-          data: dataSelecionada,
-          faturamento: 0,
-          gastos: [],
-        });
-        indexDia = novosDados.length - 1;
-      }
-
-      novosDados[indexDia].gastos.push({
-        id: Date.now(),
-        valor: parseFloat(despesaValor),
-        nome: despesaNome.trim(),
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/financial/expenses`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: dataSelecionada,
+          name: despesaNome.trim(),
+          amount: parseFloat(despesaValor),
+        }),
       });
 
-      return novosDados;
-    });
-
-    setDespesaValor('');
-    setDespesaNome('');
-    mostrarFeedback('✅ Gasto adicionado com sucesso!');
-  };
-
-  // Remover gasto
-  const handleRemoverGasto = (idGasto) => {
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
-
-      if (indexDia >= 0) {
-        novosDados[indexDia].gastos = novosDados[indexDia].gastos.filter(g => g.id !== idGasto);
+      if (!response.ok) {
+        throw new Error('Erro ao adicionar gasto');
       }
 
-      return novosDados;
-    });
+      const result = await response.json();
 
-    mostrarFeedback('✅ Gasto removido!');
+      // Atualizar dados localmente
+      setDados(prevDados => {
+        const novosDados = [...prevDados];
+        let indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
+
+        if (indexDia < 0) {
+          novosDados.push({
+            data: dataSelecionada,
+            faturamento: 0,
+            gastos: [],
+          });
+          indexDia = novosDados.length - 1;
+        }
+
+        novosDados[indexDia].gastos.push({
+          id: result.id,
+          valor: parseFloat(despesaValor),
+          nome: despesaNome.trim(),
+        });
+
+        return novosDados;
+      });
+
+      setDespesaValor('');
+      setDespesaNome('');
+      mostrarFeedback('✅ Gasto adicionado com sucesso!');
+    } catch (error) {
+      console.error('Erro:', error);
+      mostrarFeedback('❌ Erro ao adicionar gasto');
+    }
+  };
+
+  // Remover gasto via API
+  const handleRemoverGasto = async (idGasto) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/financial/expenses/${idGasto}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao remover gasto');
+      }
+
+      setDados(prevDados => {
+        const novosDados = [...prevDados];
+        const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
+
+        if (indexDia >= 0) {
+          novosDados[indexDia].gastos = novosDados[indexDia].gastos.filter(g => g.id !== idGasto);
+        }
+
+        return novosDados;
+      });
+
+      mostrarFeedback('✅ Gasto removido!');
+    } catch (error) {
+      console.error('Erro:', error);
+      mostrarFeedback('❌ Erro ao remover gasto');
+    }
   };
 
   // Editar faturamento
@@ -176,26 +246,49 @@ const DashboardFinanceiro = () => {
     setEditandoFaturamento(true);
   };
 
-  const handleSalvarEdicaoFaturamento = () => {
+  // Salvar edição de faturamento via API
+  const handleSalvarEdicaoFaturamento = async () => {
     if (!edicaoValor || parseFloat(edicaoValor) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido');
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/financial/revenue`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: dataSelecionada,
+          amount: parseFloat(edicaoValor),
+        }),
+      });
 
-      if (indexDia >= 0) {
-        novosDados[indexDia].faturamento = parseFloat(edicaoValor);
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar faturamento');
       }
 
-      return novosDados;
-    });
+      setDados(prevDados => {
+        const novosDados = [...prevDados];
+        const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
 
-    setEditandoFaturamento(false);
-    setEdicaoValor('');
-    mostrarFeedback('✅ Faturamento atualizado!');
+        if (indexDia >= 0) {
+          novosDados[indexDia].faturamento = parseFloat(edicaoValor);
+        }
+
+        return novosDados;
+      });
+
+      setEditandoFaturamento(false);
+      setEdicaoValor('');
+      mostrarFeedback('✅ Faturamento atualizado!');
+    } catch (error) {
+      console.error('Erro:', error);
+      mostrarFeedback('❌ Erro ao atualizar faturamento');
+    }
   };
 
   // Editar gasto
@@ -205,7 +298,8 @@ const DashboardFinanceiro = () => {
     setEditandoGastoId(gasto.id);
   };
 
-  const handleSalvarEdicaoGasto = () => {
+  // Salvar edição de gasto via API
+  const handleSalvarEdicaoGasto = async () => {
     if (!edicaoValor || parseFloat(edicaoValor) <= 0) {
       mostrarFeedback('⚠️ Digite um valor válido');
       return;
@@ -216,25 +310,47 @@ const DashboardFinanceiro = () => {
       return;
     }
 
-    setDados(prevDados => {
-      const novosDados = [...prevDados];
-      const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/financial/expenses/${editandoGastoId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: edicaoNome.trim(),
+          amount: parseFloat(edicaoValor),
+        }),
+      });
 
-      if (indexDia >= 0) {
-        const gasto = novosDados[indexDia].gastos.find(g => g.id === editandoGastoId);
-        if (gasto) {
-          gasto.valor = parseFloat(edicaoValor);
-          gasto.nome = edicaoNome.trim();
-        }
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar gasto');
       }
 
-      return novosDados;
-    });
+      setDados(prevDados => {
+        const novosDados = [...prevDados];
+        const indexDia = novosDados.findIndex(d => d.data === dataSelecionada);
 
-    setEditandoGastoId(null);
-    setEdicaoValor('');
-    setEdicaoNome('');
-    mostrarFeedback('✅ Gasto atualizado!');
+        if (indexDia >= 0) {
+          const gasto = novosDados[indexDia].gastos.find(g => g.id === editandoGastoId);
+          if (gasto) {
+            gasto.valor = parseFloat(edicaoValor);
+            gasto.nome = edicaoNome.trim();
+          }
+        }
+
+        return novosDados;
+      });
+
+      setEditandoGastoId(null);
+      setEdicaoValor('');
+      setEdicaoNome('');
+      mostrarFeedback('✅ Gasto atualizado!');
+    } catch (error) {
+      console.error('Erro:', error);
+      mostrarFeedback('❌ Erro ao atualizar gasto');
+    }
   };
 
   const handleCancelarEdicao = () => {
@@ -257,6 +373,23 @@ const DashboardFinanceiro = () => {
   };
 
   const dadosGraficos = prepararDadosGraficos();
+
+  // Se ainda estiver carregando
+  if (carregando) {
+    return (
+      <div className="flex min-h-screen bg-zinc-950">
+        <Sidebar />
+        <main className="flex-1 p-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin mb-4">
+              <DollarSign size={48} className="text-orange-500" />
+            </div>
+            <p className="text-gray-400">Carregando dados...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-zinc-950">
