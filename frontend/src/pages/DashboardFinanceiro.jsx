@@ -16,10 +16,10 @@ import {
 } from 'recharts';
 import { Trash2, TrendingUp, DollarSign, PieChart as PieChartIcon, Edit2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import { financialService } from '../services/api';
 
 const DashboardFinanceiro = () => {
   const navigate = useNavigate();
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
   const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
   const [faturamentoDia, setFaturamentoDia] = useState('');
@@ -47,20 +47,8 @@ const DashboardFinanceiro = () => {
     const fetchDados = async () => {
       try {
         setCarregando(true);
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/financial/summary`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Erro ao buscar dados');
-        }
-
-        const dados = await response.json();
-        setDados(dados);
+        const response = await financialService.getSummary();
+        setDados(response.data);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         mostrarFeedback('❌ Erro ao carregar dados do servidor');
@@ -98,22 +86,7 @@ const DashboardFinanceiro = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/financial/revenue`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          date: dataSelecionada,
-          amount: parseFloat(faturamentoDia),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao salvar faturamento');
-      }
+      await financialService.addRevenue(dataSelecionada, parseFloat(faturamentoDia));
 
       // Atualizar dados localmente
       setDados(prevDados => {
@@ -154,25 +127,11 @@ const DashboardFinanceiro = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/financial/expenses`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          date: dataSelecionada,
-          name: despesaNome.trim(),
-          amount: parseFloat(despesaValor),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao adicionar gasto');
-      }
-
-      const result = await response.json();
+      const result = await financialService.addExpense(
+        dataSelecionada,
+        despesaNome.trim(),
+        parseFloat(despesaValor)
+      );
 
       // Atualizar dados localmente
       setDados(prevDados => {
@@ -189,7 +148,7 @@ const DashboardFinanceiro = () => {
         }
 
         novosDados[indexDia].gastos.push({
-          id: result.id,
+          id: result.data.id,
           valor: parseFloat(despesaValor),
           nome: despesaNome.trim(),
         });
@@ -209,18 +168,7 @@ const DashboardFinanceiro = () => {
   // Remover gasto via API
   const handleRemoverGasto = async (idGasto) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/financial/expenses/${idGasto}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao remover gasto');
-      }
+      await financialService.deleteExpense(idGasto);
 
       setDados(prevDados => {
         const novosDados = [...prevDados];
@@ -254,22 +202,7 @@ const DashboardFinanceiro = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/financial/revenue`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          date: dataSelecionada,
-          amount: parseFloat(edicaoValor),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar faturamento');
-      }
+      await financialService.addRevenue(dataSelecionada, parseFloat(edicaoValor));
 
       setDados(prevDados => {
         const novosDados = [...prevDados];
@@ -311,22 +244,11 @@ const DashboardFinanceiro = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/financial/expenses/${editandoGastoId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: edicaoNome.trim(),
-          amount: parseFloat(edicaoValor),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar gasto');
-      }
+      await financialService.updateExpense(
+        editandoGastoId,
+        edicaoNome.trim(),
+        parseFloat(edicaoValor)
+      );
 
       setDados(prevDados => {
         const novosDados = [...prevDados];
